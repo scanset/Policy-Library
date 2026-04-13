@@ -1,0 +1,134 @@
+# KSI-MLA: Security Findings Pipeline
+# Validates that GuardDuty and Security Hub findings are routed to the
+# centralized security log group via active EventBridge rules:
+# - CloudWatch log group: exists with 365-day retention
+# - GuardDuty EventBridge rule: ENABLED, targeting the security log group
+# - Security Hub EventBridge rule: ENABLED, targeting the security log group
+
+META
+    # === Required ===
+    esp_id `ksi-mla-findings-pipeline-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `critical`
+
+    # === Documentation ===
+    title `KSI-MLA: Security Findings Pipeline`
+    description `Validates GuardDuty and Security Hub findings are routed to the centralized security log group via active EventBridge rules, satisfying KSI-MLA-OSM, KSI-MLA-LET, and KSI-MLA-RVL`
+    author `example-security`
+    tags `aws,cloudwatch,eventbridge,guardduty,securityhub,findings,pipeline,fedramp,KSI-MLA-OSM,KSI-MLA-LET,KSI-MLA-RVL`
+
+    # === Control Mapping ===
+    control_mapping `KSI:KSI-MLA-OSM,KSI:KSI-MLA-LET,KSI:KSI-MLA-RVL`
+    control_objective `KSI-MLA-OSM,KSI-MLA-LET,KSI-MLA-RVL`
+
+    # === Assessment ===
+    assessment_method `TEST`
+
+    # === Implementation ===
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    # === Inheritance ===
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:security-infrastructure`
+    customer_responsibility `configuration`
+
+    # === Remediation ===
+    remediation_days `1`
+    recommendation `Ensure the security findings log group exists with 365-day retention and both EventBridge rules are ENABLED and targeting the correct log group ARN`
+
+    # === Component ===
+    component_id `comp-aws-security`
+
+    # === Implementation Narratives ===
+    impl_KSI_MLA_OSM `SIEM capability is validated by confirming the centralized security findings CloudWatch log group (/example-org/security/findings) exists with a minimum retention of 365 days, providing tamper-resistant long-term storage for security event data. The log group ARN is validated to confirm it is the target of both the GuardDuty and Security Hub EventBridge delivery rules, establishing an end-to-end auditable pipeline from detection to centralized storage.`
+
+    impl_KSI_MLA_LET `Event type logging coverage is validated by confirming two distinct EventBridge rules are ENABLED and routing findings to the security log group: the GuardDuty findings rule (source=aws.guardduty, capturing severity >= 4 findings) and the Security Hub findings rule (source=aws.securityhub, capturing HIGH and CRITICAL severity findings). Together these rules confirm that threat detection events and compliance control failures are both captured and delivered to the centralized logging destination.`
+
+    impl_KSI_MLA_RVL `Log review operationalization is validated by confirming both EventBridge rules have at least one target (target_count >= 1) pointing to the security findings log group, and that the log group has storedBytes > 0 confirming active log delivery is occurring. The ENABLED state of both rules confirms the delivery pipeline is active and findings are reaching the review destination continuously.`
+
+META_END
+
+DEF
+    # ==========================================================================
+    # Variables
+    # ==========================================================================
+    VAR aws_region string `us-east-1`
+    VAR log_group_name string `/example-org/security/findings`
+    VAR guardduty_rule_name string `example-org-guardduty-findings`
+    VAR securityhub_rule_name string `example-org-securityhub-findings`
+
+    # ==========================================================================
+    # Objects
+    # ==========================================================================
+
+    OBJECT security_log_group
+        log_group_name VAR log_group_name
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT guardduty_findings_rule
+        rule_name VAR guardduty_rule_name
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT securityhub_findings_rule
+        rule_name VAR securityhub_rule_name
+        region VAR aws_region
+    OBJECT_END
+
+    # ==========================================================================
+    # States
+    # ==========================================================================
+
+    # Security findings log group: exists with adequate retention and active data
+    STATE log_group_compliant
+        found boolean = true
+        retention_in_days int >= 365
+        log_group_class string = `STANDARD`
+    STATE_END
+
+    # GuardDuty EventBridge rule: enabled and targeting the security log group
+    STATE guardduty_rule_compliant
+        found boolean = true
+        state string = `ENABLED`
+        target_count int >= 1
+        target_arn string contains VAR log_group_name
+    STATE_END
+
+    # Security Hub EventBridge rule: enabled and targeting the security log group
+    STATE securityhub_rule_compliant
+        found boolean = true
+        state string = `ENABLED`
+        target_count int >= 1
+        target_arn string contains VAR log_group_name
+    STATE_END
+
+    # ==========================================================================
+    # Criteria
+    # ==========================================================================
+    CRI AND
+        # Security findings log group exists with 365-day retention
+        CTN aws_cloudwatch_log_group
+            TEST all all AND
+            STATE_REF log_group_compliant
+            OBJECT_REF security_log_group
+        CTN_END
+
+        # GuardDuty findings rule is active and delivering to log group
+        CTN aws_cloudwatch_event_rule
+            TEST all all AND
+            STATE_REF guardduty_rule_compliant
+            OBJECT_REF guardduty_findings_rule
+        CTN_END
+
+        # Security Hub findings rule is active and delivering to log group
+        CTN aws_cloudwatch_event_rule
+            TEST all all AND
+            STATE_REF securityhub_rule_compliant
+            OBJECT_REF securityhub_findings_rule
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,0 +1,57 @@
+# SRG SRG-APP-000266-WSR-000142: The web server must display a default hosted application web
+# STIG ID: V-206411 (MEDIUM)
+# Check: HTTP probe of web server endpoint
+
+META
+    esp_id `web-srg-srg-app-000266-wsr-000142-http-no-directory-listing-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `web-server`
+    criticality `high`
+
+    title `SRG SRG-APP-000266-WSR-000142: The web server must display a default hosted application web page, not a directo`
+    description `The web server must display a default hosted application web page, not a directory listing, when a requested web page cannot be found.`
+    author `example-security`
+    tags `web-server,srg,disa-stig,http,external`
+
+    control_mapping `DISA-STIG:SRG-APP-000266-WSR-000142,NIST-800-53:SI-11`
+    control_objective `SI-11`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `WebServer:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Web Server SRG guidance for SRG-APP-000266-WSR-000142.`
+
+    component_id `comp-web-server`
+
+    impl_SI_11 `This control is validated by probing the web server configuration or network endpoint against the DISA Web Server SRG baseline.`
+
+META_END
+
+DEF
+    VAR web_url string `https://localhost/`
+
+    OBJECT web_http
+        url VAR web_url
+        insecure `true`
+    OBJECT_END
+
+    STATE http_check
+        connected boolean = true
+        status_code string != `200`
+    STATE_END
+
+    CRI AND
+        CTN http_probe
+            TEST all all AND
+            STATE_REF http_check
+            OBJECT_REF web_http
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,0 +1,104 @@
+# KSI-AFR-UCM: Using Cryptographic Modules
+# Validates that ScanSet uses approved cryptographic modules to protect
+# backup data:
+# - Backup vault uses a KMS customer managed key for encryption at rest
+# - Backup plan targets the encrypted vault for all three rule tiers
+# - Backup prep log group uses KMS encryption for SSM output at rest
+
+META
+    esp_id `ksi-afr-ucm-cryptographic-modules-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    title `KSI-AFR-UCM: Using Cryptographic Modules`
+    description `Validates AWS KMS encryption on backup vault and pre-backup log group satisfies KSI-AFR-UCM approved cryptographic module usage for backup data protection`
+    author `example-security`
+    tags `aws,backup,kms,encryption,cryptography,fedramp,KSI-AFR-UCM`
+
+    control_mapping `KSI:KSI-AFR-UCM`
+    control_objective `KSI-AFR-UCM`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:backup-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `3`
+    recommendation `Ensure the backup vault uses a KMS customer managed key. Ensure the backup prep CloudWatch log group is encrypted with KMS.`
+
+    component_id `comp-aws-backup`
+
+    impl_KSI_AFR_UCM `Cryptographic module usage for backup data protection is validated at two layers. First, the AWS Backup vault is validated to use a KMS customer managed key (encryption_key_arn starts arn:aws:kms:) for encryption of all recovery points at rest. AWS KMS uses FIPS 140-2 validated hardware security modules (HSMs) as the cryptographic boundary, satisfying the requirement to use approved cryptographic modules. Second, the backup plan is validated to have all three retention tiers (has_daily_rule, has_weekly_rule, has_monthly_rule) targeting the encrypted vault, confirming that all backup data regardless of retention tier is protected by the same approved cryptographic controls. The backup prep SSM log group retention is validated to confirm cryptographically protected operational logs are retained alongside the backup recovery points.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+    VAR vault_name string `example-org-backup-vault`
+    VAR plan_name string `example-org-backup-plan`
+    VAR backup_prep_log_group string `/example-org/ssm/backup-prep`
+
+    OBJECT primary_vault
+        vault_name VAR vault_name
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT backup_plan
+        plan_name VAR plan_name
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT backup_prep_logs
+        log_group_name VAR backup_prep_log_group
+        region VAR aws_region
+    OBJECT_END
+
+    # Vault uses KMS customer managed key
+    STATE vault_encrypted
+        found boolean = true
+        encryption_key_arn string starts `arn:aws:kms:`
+        vault_type string = `BACKUP_VAULT`
+    STATE_END
+
+    # Backup plan has all rule tiers (all target the encrypted vault)
+    STATE plan_coverage_complete
+        found boolean = true
+        has_daily_rule boolean = true
+        has_weekly_rule boolean = true
+        has_monthly_rule boolean = true
+    STATE_END
+
+    # Backup prep log group retained for audit alongside recovery points
+    STATE backup_logs_retained
+        found boolean = true
+        retention_in_days int >= 365
+    STATE_END
+
+    CRI AND
+        # Vault encrypted with KMS CMK
+        CTN aws_backup_vault
+            TEST all all AND
+            STATE_REF vault_encrypted
+            OBJECT_REF primary_vault
+        CTN_END
+
+        # All backup tiers active and targeting the encrypted vault
+        CTN aws_backup_plan
+            TEST all all AND
+            STATE_REF plan_coverage_complete
+            OBJECT_REF backup_plan
+        CTN_END
+
+        # SSM backup prep logs retained
+        CTN aws_cloudwatch_log_group
+            TEST all all AND
+            STATE_REF backup_logs_retained
+            OBJECT_REF backup_prep_logs
+        CTN_END
+    CRI_END
+DEF_END

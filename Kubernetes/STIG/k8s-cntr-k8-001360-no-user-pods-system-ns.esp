@@ -1,0 +1,53 @@
+# STIG CNTR-K8-001360: Kubernetes must separate user functionality.
+# STIG ID: V-242417 (MEDIUM)
+
+META
+    esp_id `k8s-cntr-k8-001360-no-user-pods-system-ns-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `kubernetes`
+    criticality `high`
+
+    title `STIG CNTR-K8-001360: Kubernetes must separate user functionality.`
+    description `Kubernetes must separate user functionality.`
+    author `example-security`
+    tags `kubernetes,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CNTR-K8-001360,NIST-800-53:SC-2`
+    control_objective `SC-2`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Kubernetes:cluster:k8s-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CNTR-K8-001360.`
+
+    component_id `comp-k8s-cluster`
+
+    impl_SC_2 `This control is validated by checking the required Kubernetes configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT resource_check
+        kind `Pod`
+        namespace `kube-system`
+    OBJECT_END
+
+    STATE resource_state
+         found boolean = true
+    STATE_END
+
+    CRI AND
+        CTN k8s_resource
+            TEST all all AND
+            STATE_REF resource_state
+            OBJECT_REF resource_check
+        CTN_END
+    CRI_END
+DEF_END

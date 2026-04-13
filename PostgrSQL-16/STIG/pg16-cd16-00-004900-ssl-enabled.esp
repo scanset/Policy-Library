@@ -1,0 +1,55 @@
+# STIG CD16-00-004900: PostgreSQL SSL Must Be Enabled
+# STIG ID: V-261900 (MEDIUM) - Guard against MITM attacks
+# Check: psql -c "SHOW ssl" -> must be "on"
+# Finding: SSL is not enabled
+
+META
+    esp_id `pg16-cd16-00-004900-ssl-enabled-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-004900: PostgreSQL SSL Must Be Enabled`
+    description `Validates that PostgreSQL is configured with SSL enabled to protect communications sessions against man-in-the-middle attacks. When SSL is disabled, database traffic is transmitted in cleartext, exposing credentials and query data to interception.`
+    author `example-security`
+    tags `pg16,stig,ssl,sc-23,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-004900,NIST-800-53:SC-23(3)`
+    control_objective `SC-23(3)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Enable SSL in postgresql.conf by setting ssl = on and configuring valid ssl_cert_file and ssl_key_file paths. Restart the PostgreSQL service for the change to take effect.`
+
+    component_id `comp-pg16-db`
+
+    impl_SC_23_3 `PostgreSQL implements session authenticity by requiring SSL/TLS encryption for all database connections. The ssl runtime parameter is validated to confirm transport-layer encryption is active, ensuring unique session identifiers are protected against interception and man-in-the-middle attacks during transit. Without SSL enabled, session tokens and credentials traverse the network in cleartext.`
+
+META_END
+
+DEF
+    OBJECT pg_ssl
+        parameter `ssl`
+    OBJECT_END
+
+    STATE ssl_enabled
+        found boolean = true
+        value string = `on`
+    STATE_END
+
+    CRI AND
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF ssl_enabled
+            OBJECT_REF pg_ssl
+        CTN_END
+    CRI_END
+DEF_END

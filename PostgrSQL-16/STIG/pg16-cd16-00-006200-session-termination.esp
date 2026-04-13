@@ -1,0 +1,53 @@
+# STIG CD16-00-006200: PostgreSQL must automatically terminate a user session after
+# STIG ID: V-261910 (MEDIUM)
+
+META
+    esp_id `pg16-cd16-00-006200-session-termination-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-006200: PostgreSQL must automatically terminate a user session after organization-define`
+    description `PostgreSQL must automatically terminate a user session after organization-defined conditions or trigger events requiring session disconnect.`
+    author `example-security`
+    tags `pg16,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-006200,NIST-800-53:AC-12`
+    control_objective `AC-12`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CD16-00-006200.`
+
+    component_id `comp-pg16-db`
+
+    impl_AC_12 `This control is validated by checking the required PostgreSQL configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT pg_param
+        parameter `statement_timeout`
+    OBJECT_END
+
+    STATE param_state
+        found boolean = true
+        value string != `0`
+    STATE_END
+
+    CRI AND
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF param_state
+            OBJECT_REF pg_param
+        CTN_END
+    CRI_END
+DEF_END

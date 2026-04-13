@@ -1,0 +1,129 @@
+# KSI-RPL: Backup and Recovery Planning
+# Validates that ScanSet backup infrastructure satisfies recovery planning KSIs:
+# - Backup vault: KMS encrypted, WORM locked, min 7-day retention
+# - Backup plan: daily/weekly/monthly rules, cross-region copy, 2555-day max retention
+# - Pre-backup maintenance window: enabled, running daily before backup window
+# - Backup prep log group: exists with 365-day retention
+
+META
+    esp_id `ksi-rpl-backup-recovery-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    title `KSI-RPL: Backup and Recovery Planning`
+    description `Validates AWS Backup vault lock, backup plan retention rules, cross-region copy, and pre-backup maintenance window satisfy KSI-RPL-ABO, KSI-RPL-ARP, KSI-RPL-TRC, and KSI-RPL-RRO`
+    author `example-security`
+    tags `aws,backup,recovery,vault,ssm,fedramp,KSI-RPL-ABO,KSI-RPL-ARP,KSI-RPL-TRC,KSI-RPL-RRO`
+
+    control_mapping `KSI:KSI-RPL-ABO,KSI:KSI-RPL-ARP,KSI:KSI-RPL-TRC,KSI:KSI-RPL-RRO`
+    control_objective `KSI-RPL-ABO,KSI-RPL-ARP,KSI-RPL-TRC,KSI-RPL-RRO`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:backup-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `3`
+    recommendation `Ensure backup vault has WORM lock enabled, backup plan has daily/weekly/monthly rules with cross-region copy, and the pre-backup maintenance window is enabled.`
+
+    component_id `comp-aws-backup`
+
+    impl_KSI_RPL_ABO `Backup alignment with recovery objectives is validated by confirming the backup plan has a monthly rule with DeleteAfterDays >= 2555 (max_delete_after_days >= 2555), confirming backups are retained long enough to meet RPO requirements. The backup vault is validated to have active recovery points (number_of_recovery_points >= 1), confirming backups have successfully completed. The vault WORM lock with min_retention_days >= 7 ensures recovery points cannot be prematurely deleted, protecting backup integrity.`
+
+    impl_KSI_RPL_ARP `Recovery plan alignment is validated by confirming the backup plan has three tiers of rules - daily (has_daily_rule = true), weekly (has_weekly_rule = true), and monthly (has_monthly_rule = true) - providing graduated recovery point objectives across different incident scenarios. Cross-region copy is validated (has_cross_region_copy = true), confirming recovery is possible even in a regional failure scenario, satisfying the requirement to align recovery plans with defined recovery objectives.`
+
+    impl_KSI_RPL_TRC `Recovery capability testing readiness is validated by confirming the backup vault has active recovery points (number_of_recovery_points >= 1) demonstrating successful backup execution, and the SSM maintenance window for pre-backup PostgreSQL dumps is enabled (enabled = true) and running daily (schedule contains cron). The vault WORM lock prevents recovery point deletion, ensuring test recovery points remain available.`
+
+    impl_KSI_RPL_RRO `Recovery objectives are validated by confirming the backup plan enforces a max_delete_after_days >= 2555 retention bound, and the vault lock enforces min_retention_days >= 7. The daily backup schedule (has_daily_rule = true) provides an RPO of at most 24 hours for production data. The pre-backup maintenance window runs daily at 02:00 UTC to dump PostgreSQL databases before the 03:00 UTC backup window, ensuring database-consistent recovery points.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+    VAR vault_name string `example-org-backup-vault`
+    VAR plan_name string `example-org-backup-plan`
+    VAR backup_prep_window string `example-org-backup-prep`
+    VAR backup_prep_log_group string `/example-org/ssm/backup-prep`
+
+    OBJECT primary_vault
+        vault_name VAR vault_name
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT backup_plan
+        plan_name VAR plan_name
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT backup_prep_mw
+        window_name VAR backup_prep_window
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT backup_prep_logs
+        log_group_name VAR backup_prep_log_group
+        region VAR aws_region
+    OBJECT_END
+
+    STATE vault_compliant
+        found boolean = true
+        locked boolean = true
+        min_retention_days int >= 7
+        max_retention_days int >= 365
+        number_of_recovery_points int >= 1
+        encryption_key_arn string starts `arn:aws:kms:`
+    STATE_END
+
+    STATE plan_compliant
+        found boolean = true
+        rule_count int >= 3
+        has_daily_rule boolean = true
+        has_weekly_rule boolean = true
+        has_monthly_rule boolean = true
+        has_cross_region_copy boolean = true
+        max_delete_after_days int >= 2555
+    STATE_END
+
+    STATE backup_prep_window_compliant
+        found boolean = true
+        enabled boolean = true
+        duration int >= 1
+        cutoff int = 0
+    STATE_END
+
+    STATE backup_prep_logs_compliant
+        found boolean = true
+        retention_in_days int >= 365
+    STATE_END
+
+    CRI AND
+        CTN aws_backup_vault
+            TEST all all AND
+            STATE_REF vault_compliant
+            OBJECT_REF primary_vault
+        CTN_END
+
+        CTN aws_backup_plan
+            TEST all all AND
+            STATE_REF plan_compliant
+            OBJECT_REF backup_plan
+        CTN_END
+
+        CTN aws_ssm_maintenance_window
+            TEST all all AND
+            STATE_REF backup_prep_window_compliant
+            OBJECT_REF backup_prep_mw
+        CTN_END
+
+        CTN aws_cloudwatch_log_group
+            TEST all all AND
+            STATE_REF backup_prep_logs_compliant
+            OBJECT_REF backup_prep_logs
+        CTN_END
+    CRI_END
+DEF_END

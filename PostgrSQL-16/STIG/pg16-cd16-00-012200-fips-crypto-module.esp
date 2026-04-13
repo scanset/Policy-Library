@@ -1,0 +1,52 @@
+# STIG CD16-00-012200: PostgreSQL must implement NIST FIPS 140-2 or 140-3 validated cryptographic modul
+# STIG ID: V-261965 (MEDIUM)
+
+META
+    esp_id `pg16-cd16-00-012200-fips-crypto-module-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-012200: PostgreSQL must implement NIST FIPS 140-2 or 140-3 validated cryptographic modul`
+    description `PostgreSQL must implement NIST FIPS 140-2 or 140-3 validated cryptographic modules to generate and validate cryptographic hashes.`
+    author `example-security`
+    tags `pg16,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-012200,NIST-800-53:SC-13`
+    control_objective `SC-13`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and update the configuration file to meet compliance requirements.`
+
+    component_id `comp-pg16-db`
+
+    impl_SC_13 `PostgreSQL implements this control by validating the content of critical configuration files against required security settings.`
+
+META_END
+
+DEF
+    OBJECT target_file
+        path `/proc/sys/crypto/fips_enabled`
+    OBJECT_END
+
+    STATE content_check
+        content string contains `1`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF content_check
+            OBJECT_REF target_file
+        CTN_END
+    CRI_END
+DEF_END

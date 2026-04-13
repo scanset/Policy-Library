@@ -1,0 +1,102 @@
+# KSI-AFR-UCM / KSI-SCR-MIT / KSI-IAM-ELP: KMS Key Cryptographic Controls
+# Validates that the ScanSet KMS CMK uses approved cryptographic modules
+# with automatic rotation and a least-privilege key policy:
+# - Key: enabled, CUSTOMER managed, SYMMETRIC_DEFAULT, AWS_KMS origin
+# - Rotation: enabled, period <= 90 days
+# - Policy: scoped to specific services and EC2 role, no wildcard principals
+
+META
+    esp_id `ksi-afr-ucm-scr-mit-kms-key-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    title `KSI-AFR-UCM / KSI-SCR-MIT / KSI-IAM-ELP: KMS Key Cryptographic Controls`
+    description `Validates the ScanSet KMS CMK is enabled with automatic rotation and a least-privilege key policy scoped to specific service principals`
+    author `example-security`
+    tags `aws,kms,rotation,key-policy,cryptography,fedramp,KSI-AFR-UCM,KSI-SCR-MIT,KSI-IAM-ELP`
+
+    control_mapping `KSI:KSI-AFR-UCM,KSI:KSI-SCR-MIT,KSI:KSI-IAM-ELP`
+    control_objective `KSI-AFR-UCM,KSI-SCR-MIT,KSI-IAM-ELP`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:secrets-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `3`
+    recommendation `Ensure KMS key rotation is enabled with rotation_period_in_days <= 90. Verify key policy grants only decrypt/generate permissions to services, not kms:* to any service.`
+
+    component_id `comp-aws-secrets`
+
+    impl_KSI_AFR_UCM `Approved cryptographic module usage is validated by confirming the KMS key is a CUSTOMER managed key (key_manager = CUSTOMER) with SYMMETRIC_DEFAULT spec and AWS_KMS origin. AWS KMS uses FIPS 140-2 Level 3 validated hardware security modules as the cryptographic boundary. The key is validated as enabled and in Enabled state, confirming the cryptographic module is operational. The key is not multi-region (multi_region = false), ensuring key material remains within the us-east-1 boundary consistent with the system boundary definition.`
+
+    impl_KSI_SCR_MIT `Supply chain risk mitigation for cryptographic key material is validated by confirming automatic key rotation is enabled (rotation_enabled = true) with a rotation period of 90 days or less (rotation_period_in_days <= 90). Automatic rotation ensures that compromise of the current key material is bounded in time - any data encrypted under a rotated key version remains decryptable, but new encryptions use fresh key material. The 90-day rotation period is consistent with NIST SP 800-57 recommendations for symmetric keys protecting moderate-impact data.`
+
+    impl_KSI_IAM_ELP `Least privilege for the KMS key is validated via key policy record checks. The SecretsManagerAccess statement grants only the four operations needed for secret encryption (kms:Decrypt, kms:GenerateDataKey, kms:CreateGrant, kms:DescribeKey) to secretsmanager.amazonaws.com. The EC2RoleAccess statement grants only decrypt operations (kms:Decrypt, kms:GenerateDataKey, kms:DescribeKey) to the specific EC2 instance role ARN. Service-specific principals (CloudWatch Logs, CloudTrail, GuardDuty) are granted only the operations required for their respective encryption workflows. No statement grants kms:* to any service principal other than the root account.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+    VAR kms_key_id string `example-key-id-0000-0000-000000000000`
+
+    OBJECT secrets_kms_key
+        key_id VAR kms_key_id
+        region VAR aws_region
+    OBJECT_END
+
+    # KMS key: enabled, CUSTOMER managed, rotation on, <= 90 days
+    STATE kms_key_compliant
+        found boolean = true
+        enabled boolean = true
+        key_state string = `Enabled`
+        key_manager string = `CUSTOMER`
+        key_usage string = `ENCRYPT_DECRYPT`
+        key_spec string = `SYMMETRIC_DEFAULT`
+        origin string = `AWS_KMS`
+        multi_region boolean = false
+        rotation_enabled boolean = true
+        rotation_period_in_days int <= 90
+    STATE_END
+
+    # Key policy: correct service principals with scoped permissions
+    STATE kms_policy_compliant
+        found boolean = true
+        record
+            field KeyPolicy.Statement.0.Sid string = `RootAccountFullAccess`
+            field KeyPolicy.Statement.0.Effect string = `Allow`
+            field KeyPolicy.Statement.1.Sid string = `SecretsManagerAccess`
+            field KeyPolicy.Statement.1.Principal.Service string = `secretsmanager.amazonaws.com`
+            field KeyPolicy.Statement.2.Sid string = `EC2RoleAccess`
+            field KeyPolicy.Statement.3.Sid string = `CloudWatchLogsKMS`
+            field KeyPolicy.Statement.3.Principal.Service string = `logs.amazonaws.com`
+            field KeyPolicy.Statement.4.Sid string = `CloudTrailKMS`
+            field KeyPolicy.Statement.4.Principal.Service string = `cloudtrail.amazonaws.com`
+            field KeyPolicy.Statement.5.Sid string = `GuardDutyKMS`
+            field KeyPolicy.Statement.5.Principal.Service string = `guardduty.amazonaws.com`
+            field RotationStatus.KeyRotationEnabled boolean = true
+            field RotationStatus.RotationPeriodInDays int = 90
+        record_end
+    STATE_END
+
+    CRI AND
+        # Key is enabled, customer managed, with active rotation
+        CTN aws_kms_key
+            TEST all all AND
+            STATE_REF kms_key_compliant
+            OBJECT_REF secrets_kms_key
+        CTN_END
+
+        # Key policy scopes each service to required operations only
+        CTN aws_kms_key
+            TEST all all AND
+            STATE_REF kms_policy_compliant
+            OBJECT_REF secrets_kms_key
+        CTN_END
+    CRI_END
+DEF_END

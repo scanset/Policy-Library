@@ -1,0 +1,52 @@
+# STIG CNTR-K8-000440: The Kubernetes kubelet staticPodPath must not enable static 
+# STIG ID: V-242397 (HIGH)
+
+META
+    esp_id `k8s-cntr-k8-000440-kubelet-no-static-pods-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `kubernetes`
+    criticality `critical`
+
+    title `STIG CNTR-K8-000440: The Kubernetes kubelet staticPodPath must not enable static pods.`
+    description `The Kubernetes kubelet staticPodPath must not enable static pods.`
+    author `example-security`
+    tags `kubernetes,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CNTR-K8-000440,NIST-800-53:AC-3`
+    control_objective `AC-3`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Kubernetes:cluster:k8s-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Review and remediate per DISA STIG guidance for CNTR-K8-000440.`
+
+    component_id `comp-k8s-cluster`
+
+    impl_AC_3 `This control is validated by checking the required Kubernetes configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT target_file
+        path `/var/lib/kubelet/config.yaml`
+    OBJECT_END
+
+    STATE content_check
+        content string not_contains `staticPodPath`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF content_check
+            OBJECT_REF target_file
+        CTN_END
+    CRI_END
+DEF_END

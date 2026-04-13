@@ -1,0 +1,45 @@
+# STIG AS24-U1-000130: An Apache web server, behind a load balancer or proxy server, must produce log r
+# STIG ID: V-214233 (MEDIUM)
+
+META
+    esp_id `apache-as24-u1-000130-proxy-log-config-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `apache`
+    criticality `high`
+    title `STIG AS24-U1-000130: An Apache web server, behind a load balancer or proxy server, must produce log r`
+    description `An Apache web server, behind a load balancer or proxy server, must produce log r`
+    author `example-security`
+    tags `apache,stig,disa-stig`
+    control_mapping `DISA-STIG:AS24-U1-000130,NIST-800-53:AU-3`
+    control_objective `AU-3`
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `Apache:localhost:web-hardening`
+    customer_responsibility `configuration`
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Apache STIG guidance for AS24-U1-000130.`
+    component_id `comp-apache-web`
+META_END
+
+DEF
+    VAR config_path string `/etc/httpd/conf/httpd.conf`
+
+    OBJECT httpd_config
+        path VAR config_path
+    OBJECT_END
+
+    STATE config_check
+        content string contains `LogFormat`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF config_check
+            OBJECT_REF httpd_config
+        CTN_END
+    CRI_END
+DEF_END

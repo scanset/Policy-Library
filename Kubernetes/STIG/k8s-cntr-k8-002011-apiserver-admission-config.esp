@@ -1,0 +1,57 @@
+# STIG CNTR-K8-002011: Kubernetes must have a--Pod Security--Admission control file
+# STIG ID: V-254800 (HIGH)
+
+META
+    esp_id `k8s-cntr-k8-002011-apiserver-admission-config-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `kubernetes`
+    criticality `critical`
+
+    title `STIG CNTR-K8-002011: Kubernetes must have a--Pod Security--Admission control file configured.`
+    description `Kubernetes must have a--Pod Security--Admission control file configured.`
+    author `example-security`
+    tags `kubernetes,stig,disa-stig,apiserver`
+
+    control_mapping `DISA-STIG:CNTR-K8-002011,NIST-800-53:AC-16`
+    control_objective `AC-16`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Kubernetes:cluster:k8s-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Review and remediate per DISA STIG guidance for CNTR-K8-002011.`
+
+    component_id `comp-k8s-cluster`
+
+    impl_AC_16 `This control is validated by checking the required Kubernetes configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT apiserver_pod
+        kind `Pod`
+        namespace `kube-system`
+        label_selector `component=kube-apiserver`
+    OBJECT_END
+
+    STATE flag_check
+        found boolean = true
+        record
+            field spec.containers.0.command string contains `--admission-control-config-file` at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN k8s_resource
+            TEST all all AND
+            STATE_REF flag_check
+            OBJECT_REF apiserver_pod
+        CTN_END
+    CRI_END
+DEF_END

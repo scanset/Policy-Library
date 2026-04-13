@@ -1,0 +1,53 @@
+# STIG RHEL-09-231065: /home must have noexec
+# STIG ID: V-257854 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-231065-mount-home-noexec-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-231065: RHEL 9 must prevent special devices on file systems that are imported via Networ`
+    description `RHEL 9 must prevent special devices on file systems that are imported via Network File System (NFS).`
+    author `example-security`
+    tags `rhel9,stig,disa-stig,mount,filesystem`
+
+    control_mapping `DISA-STIG:RHEL-09-231065,NIST-800-53:CM-6`
+    control_objective `CM-6`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-231065.`
+
+    component_id `comp-r9-os`
+
+    impl_CM_6 `This control is validated by checking the required system configuration against the DISA STIG baseline for RHEL 9.`
+
+META_END
+
+DEF
+    OBJECT mount_check
+        path `/home`
+    OBJECT_END
+
+    STATE option_set
+        found boolean = true
+        noexec boolean = true
+    STATE_END
+
+    CRI AND
+        CTN mount_point
+            TEST all all AND
+            STATE_REF option_set
+            OBJECT_REF mount_check
+        CTN_END
+    CRI_END
+DEF_END

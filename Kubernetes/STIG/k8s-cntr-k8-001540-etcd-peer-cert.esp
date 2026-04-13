@@ -1,0 +1,57 @@
+# STIG CNTR-K8-001540: Kubernetes etcd must have peer-cert-file set for secure comm
+# STIG ID: V-242432 (MEDIUM)
+
+META
+    esp_id `k8s-cntr-k8-001540-etcd-peer-cert-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `kubernetes`
+    criticality `high`
+
+    title `STIG CNTR-K8-001540: Kubernetes etcd must have peer-cert-file set for secure communication.`
+    description `Kubernetes etcd must have peer-cert-file set for secure communication.`
+    author `example-security`
+    tags `kubernetes,stig,disa-stig,etcd`
+
+    control_mapping `DISA-STIG:CNTR-K8-001540,NIST-800-53:SC-23`
+    control_objective `SC-23`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Kubernetes:cluster:k8s-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CNTR-K8-001540.`
+
+    component_id `comp-k8s-cluster`
+
+    impl_SC_23 `This control is validated by checking the required Kubernetes configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT etcd_pod
+        kind `Pod`
+        namespace `kube-system`
+        label_selector `component=etcd`
+    OBJECT_END
+
+    STATE flag_check
+        found boolean = true
+        record
+            field spec.containers.0.command string contains `--peer-cert-file` at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN k8s_resource
+            TEST all all AND
+            STATE_REF flag_check
+            OBJECT_REF etcd_pod
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,0 +1,57 @@
+# STIG CNTR-K8-003320: The Kubernetes API Server audit log path must be set.
+# STIG ID: V-242465 (MEDIUM)
+
+META
+    esp_id `k8s-cntr-k8-003320-apiserver-audit-path-v2-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `kubernetes`
+    criticality `high`
+
+    title `STIG CNTR-K8-003320: The Kubernetes API Server audit log path must be set.`
+    description `The Kubernetes API Server audit log path must be set.`
+    author `example-security`
+    tags `kubernetes,stig,disa-stig,apiserver`
+
+    control_mapping `DISA-STIG:CNTR-K8-003320,NIST-800-53:CM-6`
+    control_objective `CM-6`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Kubernetes:cluster:k8s-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CNTR-K8-003320.`
+
+    component_id `comp-k8s-cluster`
+
+    impl_CM_6 `This control is validated by checking the required Kubernetes configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT apiserver_pod
+        kind `Pod`
+        namespace `kube-system`
+        label_selector `component=kube-apiserver`
+    OBJECT_END
+
+    STATE flag_check
+        found boolean = true
+        record
+            field spec.containers.0.command string contains `--audit-log-path` at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN k8s_resource
+            TEST all all AND
+            STATE_REF flag_check
+            OBJECT_REF apiserver_pod
+        CTN_END
+    CRI_END
+DEF_END

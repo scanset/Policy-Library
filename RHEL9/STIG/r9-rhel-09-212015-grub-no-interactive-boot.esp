@@ -1,0 +1,52 @@
+# STIG RHEL-09-212015: RHEL 9 must disable the ability of systemd to spawn an interactive boot process.
+# STIG ID: V-257788 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-212015-grub-no-interactive-boot-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-212015: RHEL 9 must disable the ability of systemd to spawn an interactive boot process.`
+    description `RHEL 9 must disable the ability of systemd to spawn an interactive boot process.`
+    author `example-security`
+    tags `rhel9,stig,grub,boot,disa-stig`
+
+    control_mapping `DISA-STIG:RHEL-09-212015,NIST-800-53:CM-6`
+    control_objective `CM-6`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate GRUB boot loader configuration per DISA STIG guidance for RHEL-09-212015.`
+
+    component_id `comp-r9-os`
+
+    impl_CM_6 `Boot loader security is validated through GRUB configuration inspection.`
+
+META_END
+
+DEF
+    OBJECT grub_check
+        config_path `/etc/grub2.cfg`
+    OBJECT_END
+
+    STATE grub_state
+        found boolean = true
+    STATE_END
+
+    CRI AND
+        CTN grub_config
+            TEST all all AND
+            STATE_REF grub_state
+            OBJECT_REF grub_check
+        CTN_END
+    CRI_END
+DEF_END

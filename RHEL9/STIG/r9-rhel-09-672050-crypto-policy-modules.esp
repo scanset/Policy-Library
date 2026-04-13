@@ -1,0 +1,53 @@
+# STIG RHEL-09-672050: RHEL 9 must implement DOD-approved encryption in the bind package.
+# STIG ID: V-258242 (HIGH)
+
+META
+    esp_id `r9-rhel-09-672050-crypto-policy-modules-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `critical`
+
+    title `STIG RHEL-09-672050: RHEL 9 must implement DOD-approved encryption in the bind package.`
+    description `RHEL 9 must implement DOD-approved encryption in the bind package.`
+    author `example-security`
+    tags `rhel9,stig,crypto,fips,disa-stig`
+
+    control_mapping `DISA-STIG:RHEL-09-672050,NIST-800-53:SC-8,NIST-800-53:SC-8(2)`
+    control_objective `SC-8`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Set system crypto policy to FIPS using update-crypto-policies --set FIPS.`
+
+    component_id `comp-r9-os`
+
+    impl_SC_8 `System cryptographic policy is validated to meet FIPS and organizational requirements through the crypto-policies framework.`
+
+META_END
+
+DEF
+    OBJECT crypto_check
+        expected_policy `FIPS`
+    OBJECT_END
+
+    STATE policy_compliant
+        tool_available boolean = true
+        current_policy string = `FIPS`
+    STATE_END
+
+    CRI AND
+        CTN crypto_policy
+            TEST all all AND
+            STATE_REF policy_compliant
+            OBJECT_REF crypto_check
+        CTN_END
+    CRI_END
+DEF_END

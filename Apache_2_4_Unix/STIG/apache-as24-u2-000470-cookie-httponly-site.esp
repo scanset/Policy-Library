@@ -1,0 +1,54 @@
+# STIG AS24-U2-000470: Cookies exchanged between the Apache web server and client, 
+# STIG ID: V-214288 (MEDIUM)
+
+META
+    esp_id `apache-as24-u2-000470-cookie-httponly-site-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `apache`
+    criticality `high`
+
+    title `STIG AS24-U2-000470: Cookies exchanged between the Apache web server and client, such as session cook`
+    description `Cookies exchanged between the Apache web server and client, such as session cookies, must have security settings that disallow cookie access outside the originating Apache web server and hosted applic`
+    author `example-security`
+    tags `apache,stig,disa-stig,config`
+
+    control_mapping `DISA-STIG:AS24-U2-000470,NIST-800-53:SC-23(3)`
+    control_objective `SC-23(3)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Apache:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Apache STIG guidance for AS24-U2-000470.`
+
+    component_id `comp-apache-web`
+
+    impl_SC_23_3 `This control is validated by checking the Apache HTTP server configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    VAR config_path string `/etc/httpd/conf/httpd.conf`
+
+    OBJECT httpd_config
+        path VAR config_path
+    OBJECT_END
+
+    STATE config_check
+        content string contains `HttpOnly`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF config_check
+            OBJECT_REF httpd_config
+        CTN_END
+    CRI_END
+DEF_END

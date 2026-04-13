@@ -1,0 +1,53 @@
+# STIG CD16-00-002600: PostgreSQL must limit privileges to change software modules,
+# STIG ID: V-261881 (MEDIUM)
+
+META
+    esp_id `pg16-cd16-00-002600-software-module-perms-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-002600: PostgreSQL must limit privileges to change software modules, to include stored p`
+    description `PostgreSQL must limit privileges to change software modules, to include stored procedures, functions and triggers, and links to software external to PostgreSQL.`
+    author `example-security`
+    tags `pg16,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-002600,NIST-800-53:CM-5(6)`
+    control_objective `CM-5(6)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CD16-00-002600.`
+
+    component_id `comp-pg16-db`
+
+    impl_CM_5_6 `This control is validated by checking the required PostgreSQL configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT target
+        path `/usr/pgsql-16/bin`
+    OBJECT_END
+
+    STATE meta_check
+        exists boolean = true
+        permissions string = `0755`
+    STATE_END
+
+    CRI AND
+        CTN file_metadata
+            TEST all all AND
+            STATE_REF meta_check
+            OBJECT_REF target
+        CTN_END
+    CRI_END
+DEF_END

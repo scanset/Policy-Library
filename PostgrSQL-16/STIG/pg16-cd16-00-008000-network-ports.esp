@@ -1,0 +1,52 @@
+# STIG CD16-00-008000: PostgreSQL must disable network functions, ports, protocols, and services deemed
+# STIG ID: V-261926 (MEDIUM)
+
+META
+    esp_id `pg16-cd16-00-008000-network-ports-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-008000: PostgreSQL must disable network functions, ports, protocols, and services deemed`
+    description `PostgreSQL must disable network functions, ports, protocols, and services deemed by the organization to be nonsecure, in accordance with the Ports, Protocols, and Services Management (PPSM) guidance.`
+    author `example-security`
+    tags `pg16,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-008000,NIST-800-53:CM-7(1)(B)`
+    control_objective `CM-7(1)(B)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and configure the required PostgreSQL parameters to meet compliance requirements.`
+
+    component_id `comp-pg16-db`
+
+    impl_CM_7_1_B `PostgreSQL implements this control by validating the required configuration parameters are set to compliant values. The pg_config_param contract queries each parameter via SHOW and compares against the expected state.`
+
+META_END
+
+DEF
+    OBJECT pg_param
+        parameter `port`
+    OBJECT_END
+
+    STATE param_state
+        found boolean = true
+    STATE_END
+
+    CRI AND
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF param_state
+            OBJECT_REF pg_param
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,0 +1,97 @@
+# KSI-CNA-MAT / KSI-SVC-VRI / KSI-CNA-IBP: Instance Hardening and Volume Encryption
+# Validates that the ScanSet EC2 instance and its attached volumes are
+# hardened at the cloud infrastructure layer:
+# - Instance: IMDSv2 required, hop limit = 1, no public IP, UEFI boot
+# - Root volume: KMS encrypted, gp3
+# - Data volume: KMS encrypted, gp3, does not delete on termination
+
+META
+    esp_id `ksi-cna-mat-svc-vri-instance-hardening-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `critical`
+
+    title `KSI-CNA-MAT / KSI-SVC-VRI / KSI-CNA-IBP: Instance Hardening and Volume Encryption`
+    description `Validates EC2 instance IMDSv2 enforcement, no public IP, and KMS encryption on both root and data volumes`
+    author `example-security`
+    tags `aws,ec2,ebs,imdsv2,encryption,kms,fedramp,KSI-CNA-MAT,KSI-SVC-VRI,KSI-CNA-IBP`
+
+    control_mapping `KSI:KSI-CNA-MAT,KSI:KSI-SVC-VRI,KSI:KSI-CNA-IBP`
+    control_objective `KSI-CNA-MAT,KSI-SVC-VRI,KSI-CNA-IBP`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:compute-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Enable IMDSv2 (http_tokens = required) with hop limit = 1. Remove public IP association. Ensure all EBS volumes use KMS encryption.`
+
+    component_id `comp-aws-compute`
+
+    impl_KSI_CNA_MAT `Attack surface minimization at the EC2 infrastructure layer is validated by confirming: (1) IMDSv2 is required (imdsv2_required = true) and the metadata hop limit is 1 (metadata_hop_limit = 1), preventing SSRF attacks from stealing instance credentials via the metadata service; (2) the instance has no public IP address (has_public_ip = false), ensuring it is not directly reachable from the internet; (3) the instance is in a running state and uses UEFI boot mode. Together these confirm the AWS-layer attack surface is minimized as required by KSI-CNA-MAT.`
+
+    impl_KSI_SVC_VRI `Resource integrity for compute data is validated by confirming the root EBS volume is KMS-encrypted (root_volume_encrypted = true) and the separate data volume (vol-0123456789abcdef0) is independently encrypted (encrypted = true) with the same KMS customer managed key. The data volume is validated to not delete on termination (delete_on_termination = false), ensuring data integrity is preserved across instance replacement events. KMS encryption uses FIPS 140-2 validated HSMs satisfying the cryptographic integrity requirement.`
+
+    impl_KSI_CNA_IBP `Cloud-native best practices at the compute layer are validated by confirming both volumes use gp3 volume type (volume_type = gp3), the data volume has no multi-attach enabled (multi_attach_enabled = false) preventing uncontrolled concurrent access, and the instance profile ARN confirms an IAM instance profile is attached rather than long-lived access keys. The UEFI boot mode (boot_mode = uefi) confirms modern firmware security baseline is in use.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+    VAR instance_id string `i-0123456789abcdef0`
+    VAR data_volume_id string `vol-0123456789abcdef0`
+    VAR kms_key_arn string `arn:aws:kms:us-east-1:123456789012:key/example-key-id-0000-0000-000000000000`
+
+    OBJECT example-org_vm
+        instance_id VAR instance_id
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT data_volume
+        volume_id VAR data_volume_id
+        region VAR aws_region
+    OBJECT_END
+
+    # Instance: IMDSv2 enforced, no public IP, root volume encrypted
+    STATE instance_hardened
+        found boolean = true
+        state string = `running`
+        imdsv2_required boolean = true
+        metadata_hop_limit int = 1
+        has_public_ip boolean = false
+        root_volume_encrypted boolean = true
+        boot_mode string = `uefi`
+        iam_instance_profile_arn string contains `instance-profile`
+    STATE_END
+
+    # Data volume: KMS encrypted, gp3, persistent on termination
+    STATE data_volume_compliant
+        found boolean = true
+        state string = `in-use`
+        encrypted boolean = true
+        volume_type string = `gp3`
+        kms_key_id string = VAR kms_key_arn
+        multi_attach_enabled boolean = false
+        delete_on_termination boolean = false
+        attached_instance_id string = VAR instance_id
+    STATE_END
+
+    CRI AND
+        CTN aws_ec2_instance
+            TEST all all AND
+            STATE_REF instance_hardened
+            OBJECT_REF example-org_vm
+        CTN_END
+
+        CTN aws_ebs_volume
+            TEST all all AND
+            STATE_REF data_volume_compliant
+            OBJECT_REF data_volume
+        CTN_END
+    CRI_END
+DEF_END

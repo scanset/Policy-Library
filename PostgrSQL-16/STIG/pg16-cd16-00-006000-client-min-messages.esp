@@ -1,0 +1,55 @@
+# STIG CD16-00-006000: PostgreSQL Client Error Messages
+# STIG ID: V-261908 (MEDIUM) - Error messages must not reveal exploitable info
+# Check: psql -c "SHOW client_min_messages" -> must be "error"
+# Finding: client_min_messages is not set to error
+
+META
+    esp_id `pg16-cd16-00-006000-client-min-messages-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-006000: PostgreSQL Client Error Messages`
+    description `Validates that PostgreSQL limits error message detail exposed to clients by setting client_min_messages to error. Verbose messages such as debug or notice levels can reveal internal schema details, query structure, and file paths that adversaries can exploit.`
+    author `example-security`
+    tags `pg16,stig,error-messages,si-11,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-006000,NIST-800-53:SI-11`
+    control_objective `SI-11`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Set client_min_messages to error in postgresql.conf or via ALTER SYSTEM, then reload the PostgreSQL service.`
+
+    component_id `comp-pg16-db`
+
+    impl_SI_11 `PostgreSQL implements secure error handling by restricting the verbosity of client-facing error messages to the error level. The client_min_messages parameter is validated to confirm that debug, log, notice, and warning messages are suppressed from client output. This prevents disclosure of internal schema details, query structure, file paths, and stack traces that could be exploited by adversaries to map the database attack surface.`
+
+META_END
+
+DEF
+    OBJECT pg_client_messages
+        parameter `client_min_messages`
+    OBJECT_END
+
+    STATE messages_restricted
+        found boolean = true
+        value string = `error`
+    STATE_END
+
+    CRI AND
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF messages_restricted
+            OBJECT_REF pg_client_messages
+        CTN_END
+    CRI_END
+DEF_END

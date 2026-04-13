@@ -1,0 +1,68 @@
+# STIG AS24-U2-000090: The Apache web server must produce log records containing su
+# STIG ID: V-214279 (MEDIUM)
+
+META
+    esp_id `apache-as24-u2-000090-log-config-site-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `apache`
+    criticality `high`
+
+    title `STIG AS24-U2-000090: The Apache web server must produce log records containing sufficient information`
+    description `The Apache web server must produce log records containing sufficient information to establish what type of events occurred.`
+    author `example-security`
+    tags `apache,stig,disa-stig,combined`
+
+    control_mapping `DISA-STIG:AS24-U2-000090,NIST-800-53:AU-3`
+    control_objective `AU-3`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Apache:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Apache STIG guidance for AS24-U2-000090.`
+
+    component_id `comp-apache-web`
+
+    impl_AU_3 `This control is validated by checking the Apache HTTP server configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    VAR config_path string `/etc/httpd/conf/httpd.conf`
+
+    OBJECT module_check
+        module `log_config_module`
+    OBJECT_END
+
+    STATE module_loaded
+        loaded boolean = true
+    STATE_END
+
+    OBJECT httpd_config
+        path VAR config_path
+    OBJECT_END
+
+    STATE directive_present
+        content string contains `LogFormat`
+    STATE_END
+
+    CRI AND
+        CTN apache_module
+            TEST all all AND
+            STATE_REF module_loaded
+            OBJECT_REF module_check
+        CTN_END
+
+        CTN file_content
+            TEST all all AND
+            STATE_REF directive_present
+            OBJECT_REF httpd_config
+        CTN_END
+    CRI_END
+DEF_END

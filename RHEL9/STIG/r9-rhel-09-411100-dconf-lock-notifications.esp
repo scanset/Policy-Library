@@ -1,0 +1,54 @@
+# STIG RHEL-09-411100: GNOME lock-notifications
+# STIG ID: V-258059 (HIGH)
+
+META
+    esp_id `r9-rhel-09-411100-dconf-lock-notifications-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `critical`
+
+    title `STIG RHEL-09-411100: The root account must be the only account having unrestricted access to RHEL 9 s`
+    description `The root account must be the only account having unrestricted access to RHEL 9 system.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig,gnome,dconf`
+
+    control_mapping `DISA-STIG:RHEL-09-411100,NIST-800-53:CM-6`
+    control_objective `CM-6`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-411100.`
+
+    component_id `comp-r9-os`
+
+    impl_CM_6 `This control is validated by checking the required system configuration against the DISA STIG baseline for RHEL 9.`
+
+META_END
+
+DEF
+    OBJECT dconf_check
+        schema `org.gnome.desktop.notifications`
+        key `lock-screen-notifications-policy`
+    OBJECT_END
+
+    STATE setting_correct
+        applicable boolean = true
+        value string = `false`
+    STATE_END
+
+    CRI AND
+        CTN dconf_setting
+            TEST all all AND
+            STATE_REF setting_correct
+            OBJECT_REF dconf_check
+        CTN_END
+    CRI_END
+DEF_END

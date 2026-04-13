@@ -1,0 +1,45 @@
+# STIG AS24-U1-000680: The Apache web server must be configured to immediately disconnect or disable re
+# STIG ID: V-214260 (MEDIUM)
+
+META
+    esp_id `apache-as24-u1-000680-disconnect-config-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `apache`
+    criticality `high`
+    title `STIG AS24-U1-000680: The Apache web server must be configured to immediately disconnect or disable re`
+    description `The Apache web server must be configured to immediately disconnect or disable re`
+    author `example-security`
+    tags `apache,stig,disa-stig`
+    control_mapping `DISA-STIG:AS24-U1-000680,NIST-800-53:AC-17(9)`
+    control_objective `AC-17(9)`
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `Apache:localhost:web-hardening`
+    customer_responsibility `configuration`
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Apache STIG guidance for AS24-U1-000680.`
+    component_id `comp-apache-web`
+META_END
+
+DEF
+    VAR config_path string `/etc/httpd/conf/httpd.conf`
+
+    OBJECT httpd_config
+        path VAR config_path
+    OBJECT_END
+
+    STATE config_check
+        content string contains `MaxKeepAliveRequests`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF config_check
+            OBJECT_REF httpd_config
+        CTN_END
+    CRI_END
+DEF_END

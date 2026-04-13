@@ -1,0 +1,54 @@
+# SRG SRG-APP-000176-WSR-000096: Only authenticated system administrators or the designated P
+# STIG ID: V-206389 (MEDIUM)
+# Check: Web server file permissions
+
+META
+    esp_id `web-srg-srg-app-000176-wsr-000096-private-key-perms-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `web-server`
+    criticality `high`
+
+    title `SRG SRG-APP-000176-WSR-000096: Only authenticated system administrators or the designated PKI Sponsor for the w`
+    description `Only authenticated system administrators or the designated PKI Sponsor for the web server must have access to the web servers private key.`
+    author `example-security`
+    tags `web-server,srg,disa-stig,permissions,internal`
+
+    control_mapping `DISA-STIG:SRG-APP-000176-WSR-000096,NIST-800-53:IA-5(2)(A)(1)`
+    control_objective `IA-5(2)(A)(1)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `WebServer:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Web Server SRG guidance for SRG-APP-000176-WSR-000096.`
+
+    component_id `comp-web-server`
+
+    impl_IA_5_2_A_1 `This control is validated by probing the web server configuration or network endpoint against the DISA Web Server SRG baseline.`
+
+META_END
+
+DEF
+    OBJECT target
+        path `/etc/pki/tls/private`
+    OBJECT_END
+
+    STATE perms_check
+        exists boolean = true
+        permissions string = `0600`
+    STATE_END
+
+    CRI AND
+        CTN file_metadata
+            TEST all all AND
+            STATE_REF perms_check
+            OBJECT_REF target
+        CTN_END
+    CRI_END
+DEF_END

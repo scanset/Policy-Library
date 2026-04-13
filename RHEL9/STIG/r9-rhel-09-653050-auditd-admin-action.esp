@@ -1,0 +1,52 @@
+# STIG RHEL-09-653050: RHEL 9 must take action when allocated audit record storage volume reaches 95 pe
+# STIG ID: V-258159 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-653050-auditd-admin-action-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-653050: RHEL 9 must take action when allocated audit record storage volume reaches 95 pe`
+    description `RHEL 9 must take action when allocated audit record storage volume reaches 95 percent of the repository maximum audit record storage capacity.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig`
+
+    control_mapping `DISA-STIG:RHEL-09-653050,NIST-800-53:AU-5(1)`
+    control_objective `AU-5(1)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-653050.`
+
+    component_id `comp-r9-os`
+
+    impl_AU_5_1 `This control is validated by checking the content of /etc/audit/auditd.conf for the required configuration setting.`
+
+META_END
+
+DEF
+    OBJECT target_file
+        path `/etc/audit/auditd.conf`
+    OBJECT_END
+
+    STATE content_check
+        content string contains `admin_space_left_action`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF content_check
+            OBJECT_REF target_file
+        CTN_END
+    CRI_END
+DEF_END

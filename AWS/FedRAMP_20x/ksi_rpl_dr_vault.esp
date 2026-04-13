@@ -1,0 +1,98 @@
+# KSI-RPL: Cross-Region Backup DR Vault
+# Validates that the DR backup vault in us-west-2 exists, has active recovery
+# points, is KMS encrypted, and is WORM locked.
+#
+# Current state (as of 2026-03-26):
+#   - DR vault EXISTS and has 4 recovery points (cross-region copy is working)
+#   - DR vault is NOT locked (locked = false) -- this criterion will FAIL
+#   - Primary vault IS locked -- asymmetric protection is a real gap
+#   - DR vault uses a separate us-west-2 KMS key (correct and expected)
+#
+# This policy surfaces truth: the DR vault is receiving backups but an
+# insider or attacker could delete DR recovery points since WORM is not enforced.
+
+META
+    esp_id `ksi-rpl-dr-vault-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    title `KSI-RPL: Cross-Region Backup DR Vault Integrity`
+    description `Validates the DR backup vault in us-west-2 exists, is receiving recovery points, is KMS encrypted, and is WORM locked. The locked check will currently FAIL - DR vault is not locked while the primary vault is.`
+    author `example-security`
+    tags `aws,backup,dr,cross-region,us-west-2,worm,fedramp,KSI-RPL-ARP,KSI-RPL-RRO`
+
+    control_mapping `KSI:KSI-RPL-ARP,KSI:KSI-RPL-RRO`
+    control_objective `KSI-RPL-ARP,KSI-RPL-RRO`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-west-2:backup-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Apply vault lock to example-org-backup-vault-dr in us-west-2 with min_retention_days = 7 and max_retention_days = 2555 to match the primary vault lock configuration.`
+
+    component_id `comp-aws-backup`
+
+    impl_KSI_RPL_ARP `Geographic redundancy for recovery planning is validated by confirming a secondary backup vault exists in a separate AWS region and is actively receiving recovery points, confirming cross-region replication is operational. The secondary vault is validated to use customer-managed KMS encryption at rest and to have WORM protection equivalent to the primary vault, ensuring recovery points in the secondary region cannot be prematurely deleted. This confirms the recovery plan has a geographically isolated copy available for restore operations in the event of a primary region failure.`
+
+    impl_KSI_RPL_RRO `Recovery objectives require that backup copies cannot be deleted before the minimum retention period expires. This is validated by confirming both the primary and secondary backup vaults enforce WORM protection with equivalent minimum retention bounds, ensuring that recovery points in both regions are protected against deletion for the duration required to meet the documented recovery objectives. Symmetric protection across regions confirms that a compromise of one region does not eliminate the ability to restore from the other.`
+
+META_END
+
+DEF
+    VAR dr_region string `us-west-2`
+    VAR dr_vault_name string `example-org-backup-vault-dr`
+    VAR primary_region string `us-east-1`
+    VAR primary_plan_name string `example-org-backup-plan`
+
+    OBJECT dr_vault
+        vault_name VAR dr_vault_name
+        region VAR dr_region
+    OBJECT_END
+
+    OBJECT primary_plan
+        plan_name VAR primary_plan_name
+        region VAR primary_region
+    OBJECT_END
+
+    # DR vault: exists, has recovery points, encrypted, WORM locked
+    # locked = true will FAIL until vault lock is applied to the DR vault
+    STATE dr_vault_compliant
+        found boolean = true
+        vault_type string = `BACKUP_VAULT`
+        locked boolean = true
+        encryption_key_arn string starts `arn:aws:kms:us-west-2:`
+        number_of_recovery_points int >= 1
+    STATE_END
+
+    # Primary plan: cross-region copy targeting us-west-2 DR vault
+    STATE plan_has_cross_region
+        found boolean = true
+        has_cross_region_copy boolean = true
+        record
+            field BackupPlan.Rules.0.CopyActions.0.DestinationBackupVaultArn string contains `us-west-2`
+        record_end
+    STATE_END
+
+    CRI AND
+        # DR vault must exist, be encrypted, have recovery points, and be WORM locked
+        CTN aws_backup_vault
+            TEST all all AND
+            STATE_REF dr_vault_compliant
+            OBJECT_REF dr_vault
+        CTN_END
+
+        # Primary plan must have cross-region copy to us-west-2
+        CTN aws_backup_plan
+            TEST all all AND
+            STATE_REF plan_has_cross_region
+            OBJECT_REF primary_plan
+        CTN_END
+    CRI_END
+DEF_END

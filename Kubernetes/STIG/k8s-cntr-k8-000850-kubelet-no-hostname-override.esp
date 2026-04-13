@@ -1,0 +1,52 @@
+# STIG CNTR-K8-000850: Kubernetes Kubelet must deny hostname override.
+# STIG ID: V-242404 (MEDIUM)
+
+META
+    esp_id `k8s-cntr-k8-000850-kubelet-no-hostname-override-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `kubernetes`
+    criticality `high`
+
+    title `STIG CNTR-K8-000850: Kubernetes Kubelet must deny hostname override.`
+    description `Kubernetes Kubelet must deny hostname override.`
+    author `example-security`
+    tags `kubernetes,stig,disa-stig,kubelet`
+
+    control_mapping `DISA-STIG:CNTR-K8-000850,NIST-800-53:CM-5(6)`
+    control_objective `CM-5(6)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Kubernetes:cluster:k8s-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CNTR-K8-000850.`
+
+    component_id `comp-k8s-cluster`
+
+    impl_CM_5_6 `This control is validated by checking the required Kubernetes configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT kubelet_config
+        path `/var/lib/kubelet/config.yaml`
+    OBJECT_END
+
+    STATE config_check
+        content string not_contains `--hostname-override`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF config_check
+            OBJECT_REF kubelet_config
+        CTN_END
+    CRI_END
+DEF_END

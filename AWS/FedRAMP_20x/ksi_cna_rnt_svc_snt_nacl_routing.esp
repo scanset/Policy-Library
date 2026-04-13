@@ -1,0 +1,135 @@
+# KSI-CNA-RNT / KSI-SVC-SNT / KSI-CNA-RVP: Network Restriction and Protection Review
+# Validates defense-in-depth at the network layer:
+# - Private subnet NACL: non-default, 2 subnets associated, correct entry counts
+# - Public route table: routes to IGW (internet facing)
+# - Private route table: routes to NAT only (no IGW)
+# - VPC flow log: ACTIVE, capturing ALL traffic to CloudWatch
+
+META
+    esp_id `ksi-cna-rnt-svc-snt-nacl-routing-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `critical`
+
+    title `KSI-CNA-RNT / KSI-SVC-SNT / KSI-CNA-RVP: Network Restriction and Protection Review`
+    description `Validates private subnet NACL rules, route table isolation, and VPC flow log delivery satisfy network restriction and traffic security KSIs`
+    author `example-security`
+    tags `aws,nacl,route-table,flow-log,network,fedramp,KSI-CNA-RNT,KSI-SVC-SNT,KSI-CNA-RVP`
+
+    control_mapping `KSI:KSI-CNA-RNT,KSI:KSI-SVC-SNT,KSI:KSI-CNA-RVP`
+    control_objective `KSI-CNA-RNT,KSI-SVC-SNT,KSI-CNA-RVP`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:network-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Ensure private subnets have a custom NACL (not default) with deny-all as the final rule. Private route table must route to NAT only, not IGW.`
+
+    component_id `comp-aws-network`
+
+    impl_KSI_CNA_RNT `Network traffic restriction is validated at two layers. First, the private subnet NACL (example-org-nacl-private) is validated to be non-default (is_default = false) with 2 subnets associated, confirming custom stateless filtering is applied to private subnet traffic. The NACL has 5 ingress and 5 egress rules including the implicit deny-all at rule 32767, providing stateless defense-in-depth on top of security groups. Second, the private route table is validated to route 0.0.0.0/0 through the NAT gateway only (has_nat_route = true, has_igw_route = false), ensuring private subnets have no direct inbound internet path.`
+
+    impl_KSI_SVC_SNT `Network traffic security is validated by confirming the private route table enforces outbound-only internet access via NAT (has_nat_route = true, has_igw_route = false), and the public route table routes through the IGW for controlled bidirectional access (has_igw_route = true). The NACL ingress rules restrict inbound traffic to VPC-sourced HTTPS (443) and ephemeral return ports, with 0.0.0.0/0 allowed only on ephemeral ports (1024-65535) for NAT return traffic - this is a required concession for stateless NACLs when using NAT. The deny-all final rule confirms no unconstrained ingress.`
+
+    impl_KSI_CNA_RVP `Protection review is operationalized by confirming VPC flow logs are ACTIVE (flow_log_status = ACTIVE) capturing ALL traffic (traffic_type = ALL) and delivering successfully (deliver_logs_status = SUCCESS) to the designated CloudWatch log group. This confirms the network protection configuration is continuously observable and reviewable, satisfying the requirement to review protections.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+    VAR vpc_id string `vpc-0123456789abcdef0`
+
+    OBJECT private_nacl
+        tags `Name=example-org-nacl-private`
+        vpc_id VAR vpc_id
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT public_rt
+        tags `Name=example-org-rt-public`
+        vpc_id VAR vpc_id
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT private_rt
+        tags `Name=example-org-rt-private`
+        vpc_id VAR vpc_id
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT vpc_flow_log
+        resource_id VAR vpc_id
+        region VAR aws_region
+    OBJECT_END
+
+    # Private NACL: non-default, associated with private subnets, correct entry counts
+    STATE nacl_compliant
+        found boolean = true
+        is_default boolean = false
+        association_count int >= 2
+        ingress_entry_count int >= 4
+        egress_entry_count int >= 4
+    STATE_END
+
+    # Public route table: routes to IGW
+    STATE public_rt_compliant
+        found boolean = true
+        has_igw_route boolean = true
+        has_nat_route boolean = false
+        is_main boolean = false
+    STATE_END
+
+    # Private route table: NAT only, no IGW
+    STATE private_rt_compliant
+        found boolean = true
+        has_nat_route boolean = true
+        has_igw_route boolean = false
+        has_internet_route boolean = true
+        is_main boolean = false
+    STATE_END
+
+    # VPC flow log: active, capturing all traffic
+    STATE flow_log_compliant
+        found boolean = true
+        flow_log_status string = `ACTIVE`
+        traffic_type string = `ALL`
+        deliver_logs_status string = `SUCCESS`
+        log_destination_type string = `cloud-watch-logs`
+    STATE_END
+
+    CRI AND
+        # Private NACL is custom and associated with private subnets
+        CTN aws_network_acl
+            TEST all all AND
+            STATE_REF nacl_compliant
+            OBJECT_REF private_nacl
+        CTN_END
+
+        # Public route table routes to IGW
+        CTN aws_route_table
+            TEST all all AND
+            STATE_REF public_rt_compliant
+            OBJECT_REF public_rt
+        CTN_END
+
+        # Private route table routes to NAT only
+        CTN aws_route_table
+            TEST all all AND
+            STATE_REF private_rt_compliant
+            OBJECT_REF private_rt
+        CTN_END
+
+        # VPC flow logs active and delivering all traffic
+        CTN aws_flow_log
+            TEST all all AND
+            STATE_REF flow_log_compliant
+            OBJECT_REF vpc_flow_log
+        CTN_END
+    CRI_END
+DEF_END

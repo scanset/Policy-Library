@@ -1,0 +1,52 @@
+# STIG RHEL-09-432035: RHEL 9 must restrict the use of the 'su' command.
+# STIG ID: V-258088 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-432035-sudoers-logfile-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-432035: RHEL 9 must restrict the use of the 'su' command.`
+    description `RHEL 9 must restrict the use of the 'su' command.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig`
+
+    control_mapping `DISA-STIG:RHEL-09-432035,NIST-800-53:AC-3(4),NIST-800-53:IA-11,NIST-800-53:SC-11`
+    control_objective `AC-3(4)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-432035.`
+
+    component_id `comp-r9-os`
+
+    impl_AC_3_4 `This control is validated by checking /etc/sudoers for the required configuration.`
+
+META_END
+
+DEF
+    OBJECT target_file
+        path `/etc/sudoers`
+    OBJECT_END
+
+    STATE content_check
+        content string contains `logfile`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF content_check
+            OBJECT_REF target_file
+        CTN_END
+    CRI_END
+DEF_END

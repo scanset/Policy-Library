@@ -1,0 +1,52 @@
+# STIG RHEL-09-631015: RHEL 9 must map the authenticated identity to the user or gr
+# STIG ID: V-258132 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-631015-sssd-id-provider-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-631015: RHEL 9 must map the authenticated identity to the user or group account for PKI-`
+    description `RHEL 9 must map the authenticated identity to the user or group account for PKI-based authentication.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig`
+
+    control_mapping `DISA-STIG:RHEL-09-631015,NIST-800-53:IA-5(2)(A)(2)`
+    control_objective `IA-5(2)(A)(2)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-631015.`
+
+    component_id `comp-r9-os`
+
+    impl_IA_5_2_A_2 `This control is validated by checking the required system configuration against the DISA STIG baseline for RHEL 9.`
+
+META_END
+
+DEF
+    OBJECT target_file
+        path `/etc/sssd/sssd.conf`
+    OBJECT_END
+
+    STATE content_check
+        content string contains `id_provider`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF content_check
+            OBJECT_REF target_file
+        CTN_END
+    CRI_END
+DEF_END

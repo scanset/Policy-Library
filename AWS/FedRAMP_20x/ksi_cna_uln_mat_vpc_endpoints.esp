@@ -1,0 +1,151 @@
+# KSI-CNA-ULN / KSI-CNA-MAT: Logical Networking and Attack Surface Minimization
+# Validates that ScanSet uses logical network isolation and VPC endpoints
+# to keep AWS API traffic private:
+# - VPC: non-default, private CIDR, DNS enabled
+# - Critical Interface endpoints: ssm, kms, secretsmanager, logs (private DNS enabled)
+# - S3 Gateway endpoint: routes S3 traffic within AWS network
+
+META
+    esp_id `ksi-cna-uln-mat-vpc-endpoints-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    title `KSI-CNA-ULN / KSI-CNA-MAT: Logical Networking and VPC Endpoint Isolation`
+    description `Validates the ScanSet VPC uses logical network segmentation and VPC endpoints to prevent AWS API traffic from traversing the public internet`
+    author `example-security`
+    tags `aws,vpc,vpc-endpoint,privatelink,fedramp,KSI-CNA-ULN,KSI-CNA-MAT`
+
+    control_mapping `KSI:KSI-CNA-ULN,KSI:KSI-CNA-MAT`
+    control_objective `KSI-CNA-ULN,KSI-CNA-MAT`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:network-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `3`
+    recommendation `Ensure the VPC is non-default with private CIDR and DNS enabled. Deploy Interface VPC endpoints for SSM, KMS, Secrets Manager, and CloudWatch Logs with private DNS enabled.`
+
+    component_id `comp-aws-network`
+
+    impl_KSI_CNA_ULN `Logical networking is validated by confirming the ScanSet VPC (10.0.0.0/16) is a non-default VPC (is_default = false) with DNS support and DNS hostnames enabled, providing proper internal name resolution within the logical network boundary. The VPC CIDR uses a private RFC 1918 address space, confirming logical isolation from the public internet at the network layer.`
+
+    impl_KSI_CNA_MAT `Attack surface minimization for AWS API communication is validated by confirming four critical Interface VPC endpoints exist with state=available and private_dns_enabled=true: SSM (for maintenance window execution), KMS (for encryption operations), Secrets Manager (for credential retrieval), and CloudWatch Logs (for log delivery). Private DNS ensures that AWS SDK calls to these services resolve to private endpoint IPs within the VPC rather than traversing the public internet. The S3 Gateway endpoint is validated to have at least one route table associated, confirming S3 traffic is routed within the AWS network. Together these confirm that all sensitive AWS API calls - credential retrieval, encryption, log delivery, and instance management - remain within the private network boundary.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+    VAR vpc_id string `vpc-0123456789abcdef0`
+
+    OBJECT boundary_vpc
+        vpc_id VAR vpc_id
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT ssm_endpoint
+        service_name `com.amazonaws.us-east-1.ssm`
+        vpc_id VAR vpc_id
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT kms_endpoint
+        service_name `com.amazonaws.us-east-1.kms`
+        vpc_id VAR vpc_id
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT secretsmanager_endpoint
+        service_name `com.amazonaws.us-east-1.secretsmanager`
+        vpc_id VAR vpc_id
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT logs_endpoint
+        service_name `com.amazonaws.us-east-1.logs`
+        vpc_id VAR vpc_id
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT s3_endpoint
+        service_name `com.amazonaws.us-east-1.s3`
+        vpc_id VAR vpc_id
+        region VAR aws_region
+    OBJECT_END
+
+    # VPC: non-default, private CIDR, DNS enabled
+    STATE vpc_logical_network
+        exists boolean = true
+        is_default boolean = false
+        state string = `available`
+        enable_dns_support boolean = true
+        enable_dns_hostnames boolean = true
+        cidr_block string starts `10.`
+    STATE_END
+
+    # Interface endpoints: available with private DNS enabled
+    STATE interface_endpoint_compliant
+        found boolean = true
+        vpc_endpoint_type string = `Interface`
+        state string = `available`
+        private_dns_enabled boolean = true
+        subnet_count int >= 1
+    STATE_END
+
+    # S3 Gateway endpoint: available with route table associated
+    STATE s3_gateway_compliant
+        found boolean = true
+        vpc_endpoint_type string = `Gateway`
+        state string = `available`
+        route_table_count int >= 1
+    STATE_END
+
+    CRI AND
+        # VPC is non-default with private CIDR and DNS enabled
+        CTN aws_vpc
+            TEST all all AND
+            STATE_REF vpc_logical_network
+            OBJECT_REF boundary_vpc
+        CTN_END
+
+        # SSM endpoint: required for maintenance window execution
+        CTN aws_vpc_endpoint
+            TEST all all AND
+            STATE_REF interface_endpoint_compliant
+            OBJECT_REF ssm_endpoint
+        CTN_END
+
+        # KMS endpoint: required for encryption operations
+        CTN aws_vpc_endpoint
+            TEST all all AND
+            STATE_REF interface_endpoint_compliant
+            OBJECT_REF kms_endpoint
+        CTN_END
+
+        # Secrets Manager endpoint: required for credential retrieval
+        CTN aws_vpc_endpoint
+            TEST all all AND
+            STATE_REF interface_endpoint_compliant
+            OBJECT_REF secretsmanager_endpoint
+        CTN_END
+
+        # CloudWatch Logs endpoint: required for log delivery
+        CTN aws_vpc_endpoint
+            TEST all all AND
+            STATE_REF interface_endpoint_compliant
+            OBJECT_REF logs_endpoint
+        CTN_END
+
+        # S3 Gateway endpoint: S3 traffic stays within AWS network
+        CTN aws_vpc_endpoint
+            TEST all all AND
+            STATE_REF s3_gateway_compliant
+            OBJECT_REF s3_endpoint
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,0 +1,57 @@
+# STIG CNTR-K8-002640: Kubernetes endpoints must use approved organizational certif
+# STIG ID: V-245544 (HIGH)
+
+META
+    esp_id `k8s-cntr-k8-002640-apiserver-kubelet-client-cert-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `kubernetes`
+    criticality `critical`
+
+    title `STIG CNTR-K8-002640: Kubernetes endpoints must use approved organizational certificate and key pair t`
+    description `Kubernetes endpoints must use approved organizational certificate and key pair to protect information in transit.`
+    author `example-security`
+    tags `kubernetes,stig,disa-stig,apiserver`
+
+    control_mapping `DISA-STIG:CNTR-K8-002640,NIST-800-53:SC-12(3)`
+    control_objective `SC-12(3)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Kubernetes:cluster:k8s-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Review and remediate per DISA STIG guidance for CNTR-K8-002640.`
+
+    component_id `comp-k8s-cluster`
+
+    impl_SC_12_3 `This control is validated by checking the required Kubernetes configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT apiserver_pod
+        kind `Pod`
+        namespace `kube-system`
+        label_selector `component=kube-apiserver`
+    OBJECT_END
+
+    STATE flag_check
+        found boolean = true
+        record
+            field spec.containers.0.command string contains `--kubelet-client-certificate` at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN k8s_resource
+            TEST all all AND
+            STATE_REF flag_check
+            OBJECT_REF apiserver_pod
+        CTN_END
+    CRI_END
+DEF_END

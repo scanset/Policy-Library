@@ -1,0 +1,54 @@
+# SRG SRG-APP-000435-WSR-000147: The web server must be protected from being stopped by a non
+# STIG ID: V-206432 (MEDIUM)
+# Check: Web server file permissions
+
+META
+    esp_id `web-srg-srg-app-000435-wsr-000147-pid-file-perms-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `web-server`
+    criticality `high`
+
+    title `SRG SRG-APP-000435-WSR-000147: The web server must be protected from being stopped by a non-privileged user.`
+    description `The web server must be protected from being stopped by a non-privileged user.`
+    author `example-security`
+    tags `web-server,srg,disa-stig,permissions,internal`
+
+    control_mapping `DISA-STIG:SRG-APP-000435-WSR-000147,NIST-800-53:SC-5`
+    control_objective `SC-5`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `WebServer:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Web Server SRG guidance for SRG-APP-000435-WSR-000147.`
+
+    component_id `comp-web-server`
+
+    impl_SC_5 `This control is validated by probing the web server configuration or network endpoint against the DISA Web Server SRG baseline.`
+
+META_END
+
+DEF
+    OBJECT target
+        path `/run/nginx.pid`
+    OBJECT_END
+
+    STATE perms_check
+        exists boolean = true
+        permissions string = `0644`
+    STATE_END
+
+    CRI AND
+        CTN file_metadata
+            TEST all all AND
+            STATE_REF perms_check
+            OBJECT_REF target
+        CTN_END
+    CRI_END
+DEF_END

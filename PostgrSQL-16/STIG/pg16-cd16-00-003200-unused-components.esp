@@ -1,0 +1,52 @@
+# STIG CD16-00-003200: Unused database components, PostgreSQL software, and databas
+# STIG ID: V-261886 (MEDIUM)
+
+META
+    esp_id `pg16-cd16-00-003200-unused-components-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-003200: Unused database components, PostgreSQL software, and database objects must be re`
+    description `Unused database components, PostgreSQL software, and database objects must be removed.`
+    author `example-security`
+    tags `pg16,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-003200,NIST-800-53:CM-7`
+    control_objective `CM-7`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CD16-00-003200.`
+
+    component_id `comp-pg16-db`
+
+    impl_CM_7 `This control is validated by checking the required PostgreSQL configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT pg_query
+        query `installed_extensions`
+    OBJECT_END
+
+    STATE query_check
+        found boolean = true
+    STATE_END
+
+    CRI AND
+        CTN pg_catalog_query
+            TEST all all AND
+            STATE_REF query_check
+            OBJECT_REF pg_query
+        CTN_END
+    CRI_END
+DEF_END

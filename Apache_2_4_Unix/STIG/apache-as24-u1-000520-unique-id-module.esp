@@ -1,0 +1,52 @@
+# STIG AS24-U1-000520: The Apache web server must generate a session ID using as mu
+# STIG ID: V-214253 (HIGH)
+
+META
+    esp_id `apache-as24-u1-000520-unique-id-module-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `apache`
+    criticality `critical`
+
+    title `STIG AS24-U1-000520: The Apache web server must generate a session ID using as much of the character `
+    description `The Apache web server must generate a session ID using as much of the character set as possible to reduce the risk of brute force.`
+    author `example-security`
+    tags `apache,stig,disa-stig,module`
+
+    control_mapping `DISA-STIG:AS24-U1-000520,NIST-800-53:SC-23(3)`
+    control_objective `SC-23(3)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Apache:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Review and remediate per DISA Apache STIG guidance for AS24-U1-000520.`
+
+    component_id `comp-apache-web`
+
+    impl_SC_23_3 `This control is validated by checking the Apache HTTP server configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT module_check
+        module `unique_id_module`
+    OBJECT_END
+
+    STATE module_state
+        loaded boolean = true
+    STATE_END
+
+    CRI AND
+        CTN apache_module
+            TEST all all AND
+            STATE_REF module_state
+            OBJECT_REF module_check
+        CTN_END
+    CRI_END
+DEF_END

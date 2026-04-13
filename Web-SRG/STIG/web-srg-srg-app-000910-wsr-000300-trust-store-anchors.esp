@@ -1,0 +1,55 @@
+# SRG SRG-APP-000910-WSR-000300: The web server must include only approved trust anchors in t
+# STIG ID: V-264356 (MEDIUM)
+# Check: Web server configuration setting
+
+META
+    esp_id `web-srg-srg-app-000910-wsr-000300-trust-store-anchors-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `web-server`
+    criticality `high`
+
+    title `SRG SRG-APP-000910-WSR-000300: The web server must include only approved trust anchors in trust stores or certi`
+    description `The web server must include only approved trust anchors in trust stores or certificate stores managed by the organization.`
+    author `example-security`
+    tags `web-server,srg,disa-stig,config,internal`
+
+    control_mapping `DISA-STIG:SRG-APP-000910-WSR-000300,NIST-800-53:SC-17`
+    control_objective `SC-17`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `WebServer:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Web Server SRG guidance for SRG-APP-000910-WSR-000300.`
+
+    component_id `comp-web-server`
+
+    impl_SC_17 `This control is validated by probing the web server configuration or network endpoint against the DISA Web Server SRG baseline.`
+
+META_END
+
+DEF
+    VAR config_path string `/etc/nginx/nginx.conf`
+
+    OBJECT web_config
+        path VAR config_path
+    OBJECT_END
+
+    STATE config_check
+        content string contains `ssl_trusted_certificate`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF config_check
+            OBJECT_REF web_config
+        CTN_END
+    CRI_END
+DEF_END

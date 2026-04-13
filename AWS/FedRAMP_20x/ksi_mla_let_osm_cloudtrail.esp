@@ -1,0 +1,138 @@
+# KSI-MLA-LET / KSI-MLA-OSM / KSI-MLA-RVL: CloudTrail Event Logging
+# Validates that CloudTrail is active and delivering all management and
+# S3 data events to both S3 and CloudWatch Logs with log file validation:
+# - CloudTrail trail: active, KMS encrypted, log file validation enabled
+# - CloudTrail log group: exists with 365-day retention
+# - CloudTrail IAM role: trusts cloudtrail.amazonaws.com
+# - Audit S3 bucket: KMS encrypted, versioned, public access blocked
+
+META
+    esp_id `ksi-mla-let-osm-cloudtrail-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `critical`
+
+    title `KSI-MLA-LET / KSI-MLA-OSM / KSI-MLA-RVL: CloudTrail Event Logging`
+    description `Validates CloudTrail is capturing all management and data events, delivering to KMS-encrypted S3 and CloudWatch Logs with log file validation enabled`
+    author `example-security`
+    tags `aws,cloudtrail,s3,cloudwatch,iam,fedramp,KSI-MLA-LET,KSI-MLA-OSM,KSI-MLA-RVL`
+
+    control_mapping `KSI:KSI-MLA-LET,KSI:KSI-MLA-OSM,KSI:KSI-MLA-RVL`
+    control_objective `KSI-MLA-LET,KSI-MLA-OSM,KSI-MLA-RVL`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:logging-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Ensure CloudTrail is logging all management and S3 data events with log file validation enabled and KMS encryption. Verify the CloudWatch log group has adequate retention.`
+
+    component_id `comp-aws-logging`
+
+    impl_KSI_MLA_LET `Event type logging is validated by confirming the CloudTrail trail captures all management events including global service events, and S3 data events for all buckets. Log file validation is confirmed enabled, ensuring the integrity of the audit log cannot be silently compromised after delivery. Events are delivered to both a retained S3 bucket and a CloudWatch log group, providing redundant log destinations that support both long-term archival and real-time monitoring.`
+
+    impl_KSI_MLA_OSM `SIEM capability for API audit events is validated by confirming the CloudTrail trail delivers events to a CloudWatch log group with 365-day retention, where metric filters and alarms operate on the log stream. The trail uses KMS encryption ensuring log confidentiality in transit and at rest. The CloudTrail delivery role is confirmed to trust only cloudtrail.amazonaws.com, ensuring log delivery authorization is scoped to the audit service.`
+
+    impl_KSI_MLA_RVL `Log review capability is validated by confirming the CloudTrail log group has retention_in_days >= 365, providing sufficient history for incident investigation and periodic review. Log file validation ensures that any tampering with archived logs in S3 is detectable. The audit S3 bucket has versioning enabled, providing an additional layer of protection against log deletion or overwrite.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+    VAR kms_key_arn string `arn:aws:kms:us-east-1:123456789012:key/example-key-id-0000-0000-000000000000`
+
+    OBJECT cloudtrail
+        trail_name `example-org-trail`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT cloudtrail_log_group
+        log_group_name `/example-org/cloudtrail`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT cloudtrail_role
+        role_name `example-org-cloudtrail-role`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT audit_bucket
+        bucket_name `example-org-audit-logs`
+        region VAR aws_region
+    OBJECT_END
+
+    # CloudTrail: active, KMS encrypted, log file validation, global events
+    STATE cloudtrail_compliant
+        found boolean = true
+        is_logging boolean = true
+        log_file_validation_enabled boolean = true
+        include_global_service_events boolean = true
+        kms_key_id string = VAR kms_key_arn
+        has_cloud_watch_logs boolean = true
+        s3_bucket_name string = `example-org-audit-logs`
+    STATE_END
+
+    # CloudTrail log group: 365-day retention
+    STATE cloudtrail_log_group_compliant
+        found boolean = true
+        retention_in_days int >= 365
+        log_group_class string = `STANDARD`
+    STATE_END
+
+    # CloudTrail role: trusts cloudtrail.amazonaws.com
+    STATE cloudtrail_role_compliant
+        found boolean = true
+        inline_policy_count int = 1
+        record
+            field AssumeRolePolicyDocument.Statement.0.Principal.Service string = `cloudtrail.amazonaws.com`
+            field AssumeRolePolicyDocument.Statement.0.Effect string = `Allow`
+            field AssumeRolePolicyDocument.Statement.0.Action string = `sts:AssumeRole`
+        record_end
+    STATE_END
+
+    # Audit S3 bucket: KMS encrypted, versioned, public access blocked
+    STATE audit_bucket_compliant
+        found boolean = true
+        sse_algorithm string = `aws:kms`
+        kms_master_key_id string = VAR kms_key_arn
+        bucket_key_enabled boolean = true
+        versioning_status string = `Enabled`
+        block_public_acls boolean = true
+        ignore_public_acls boolean = true
+        block_public_policy boolean = true
+        restrict_public_buckets boolean = true
+        ssl_enforced boolean = true
+        lifecycle_enabled boolean = true
+    STATE_END
+
+    CRI AND
+        CTN aws_cloudtrail
+            TEST all all AND
+            STATE_REF cloudtrail_compliant
+            OBJECT_REF cloudtrail
+        CTN_END
+
+        CTN aws_cloudwatch_log_group
+            TEST all all AND
+            STATE_REF cloudtrail_log_group_compliant
+            OBJECT_REF cloudtrail_log_group
+        CTN_END
+
+        CTN aws_iam_role
+            TEST all all AND
+            STATE_REF cloudtrail_role_compliant
+            OBJECT_REF cloudtrail_role
+        CTN_END
+
+        CTN aws_s3_bucket
+            TEST all all AND
+            STATE_REF audit_bucket_compliant
+            OBJECT_REF audit_bucket
+        CTN_END
+    CRI_END
+DEF_END

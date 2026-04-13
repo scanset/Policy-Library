@@ -1,0 +1,53 @@
+# STIG CD16-00-009300: PostgreSQL products must be a version supported by the vendo
+# STIG ID: V-283674 (HIGH)
+
+META
+    esp_id `pg16-cd16-00-009300-vendor-supported-version-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `critical`
+
+    title `STIG CD16-00-009300: PostgreSQL products must be a version supported by the vendor.`
+    description `PostgreSQL products must be a version supported by the vendor.`
+    author `example-security`
+    tags `pg16,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-009300,NIST-800-53:SA-22`
+    control_objective `SA-22`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Review and remediate per DISA STIG guidance for CD16-00-009300.`
+
+    component_id `comp-pg16-db`
+
+    impl_SA_22 `This control is validated by checking the required PostgreSQL configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT pg_param
+        parameter `server_version`
+    OBJECT_END
+
+    STATE param_state
+        found boolean = true
+        value string != ``
+    STATE_END
+
+    CRI AND
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF param_state
+            OBJECT_REF pg_param
+        CTN_END
+    CRI_END
+DEF_END

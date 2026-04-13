@@ -1,0 +1,53 @@
+# STIG CNTR-K8-003260: The Kubernetes etcd must have file permissions set to 644 or
+# STIG ID: V-242459 (MEDIUM)
+
+META
+    esp_id `k8s-cntr-k8-003260-etcd-data-perms-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `kubernetes`
+    criticality `high`
+
+    title `STIG CNTR-K8-003260: The Kubernetes etcd must have file permissions set to 644 or more restrictive.`
+    description `The Kubernetes etcd must have file permissions set to 644 or more restrictive.`
+    author `example-security`
+    tags `kubernetes,stig,disa-stig,permissions`
+
+    control_mapping `DISA-STIG:CNTR-K8-003260,NIST-800-53:CM-6`
+    control_objective `CM-6`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Kubernetes:cluster:k8s-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CNTR-K8-003260.`
+
+    component_id `comp-k8s-cluster`
+
+    impl_CM_6 `This control is validated by checking the required Kubernetes configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT target
+        path `/var/lib/etcd`
+    OBJECT_END
+
+    STATE meta_check
+        exists boolean = true
+        permissions string = `0700`
+    STATE_END
+
+    CRI AND
+        CTN file_metadata
+            TEST all all AND
+            STATE_REF meta_check
+            OBJECT_REF target
+        CTN_END
+    CRI_END
+DEF_END

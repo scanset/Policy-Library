@@ -1,0 +1,55 @@
+# SRG SRG-APP-000334-WSR-000024: The web server must uniquely identify and authenticate sourc
+# STIG ID: V-279028 (MEDIUM)
+# Check: Web server configuration setting
+
+META
+    esp_id `web-srg-srg-app-000334-wsr-000024-source-authentication-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `web-server`
+    criticality `high`
+
+    title `SRG SRG-APP-000334-WSR-000024: The web server must uniquely identify and authenticate source by organization, s`
+    description `The web server must uniquely identify and authenticate source by organization, system, application, and/or individual for information transfer.`
+    author `example-security`
+    tags `web-server,srg,disa-stig,config,internal`
+
+    control_mapping `DISA-STIG:SRG-APP-000334-WSR-000024,NIST-800-53:AC-4(17),NIST-800-53:CM-6`
+    control_objective `AC-4(17)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `WebServer:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Web Server SRG guidance for SRG-APP-000334-WSR-000024.`
+
+    component_id `comp-web-server`
+
+    impl_AC_4_17 `This control is validated by probing the web server configuration or network endpoint against the DISA Web Server SRG baseline.`
+
+META_END
+
+DEF
+    VAR config_path string `/etc/nginx/nginx.conf`
+
+    OBJECT web_config
+        path VAR config_path
+    OBJECT_END
+
+    STATE config_check
+        content string contains `auth_basic`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF config_check
+            OBJECT_REF web_config
+        CTN_END
+    CRI_END
+DEF_END

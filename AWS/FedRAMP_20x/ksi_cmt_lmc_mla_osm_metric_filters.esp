@@ -1,0 +1,169 @@
+# KSI-CMT-LMC / KSI-MLA-OSM / KSI-AFR-SCN: Security Metric Filters and Alarms
+# Validates that CloudTrail log events are monitored via metric filters
+# and alarms for three key security event types:
+# - Root account login detection
+# - Unauthorized API call detection
+# - Security group change detection
+
+META
+    esp_id `ksi-cmt-lmc-mla-osm-metric-filters-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    title `KSI-CMT-LMC / KSI-MLA-OSM / KSI-AFR-SCN: Security Metric Filters and Alarms`
+    description `Validates CloudWatch metric filters and alarms are configured to detect root login, unauthorized API calls, and security group changes from CloudTrail logs`
+    author `example-security`
+    tags `aws,cloudwatch,metric-filter,alarm,cloudtrail,fedramp,KSI-CMT-LMC,KSI-MLA-OSM,KSI-AFR-SCN`
+
+    control_mapping `KSI:KSI-CMT-LMC,KSI:KSI-MLA-OSM,KSI:KSI-AFR-SCN`
+    control_objective `KSI-CMT-LMC,KSI-MLA-OSM,KSI-AFR-SCN`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:logging-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Ensure all three metric filters exist on the CloudTrail log group and all three corresponding alarms are configured with correct metric names and namespaces.`
+
+    component_id `comp-aws-logging`
+
+    impl_KSI_CMT_LMC `Change monitoring capability is validated by confirming a metric filter exists that captures all security group modification events from CloudTrail logs, and a corresponding alarm is configured to fire when any security group change is detected. This provides automated detection of any modification to the network security boundary, whether an addition, revocation, or deletion of security group rules.`
+
+    impl_KSI_MLA_OSM `SIEM alerting capability is validated by confirming three metric filters are attached to the CloudTrail log group and producing metrics in the designated security namespace, and that corresponding alarms are configured against those metrics. Root login detection, unauthorized API call detection, and security group change detection together provide real-time alerting on the highest-priority security event categories for this system.`
+
+    impl_KSI_AFR_SCN `Significant change notification is validated by confirming the security group change metric filter and alarm are correctly configured to capture all six security group event types that represent boundary changes. The unauthorized API call alarm provides broader change notification by alerting on access denials that may indicate an attempt to make unauthorized changes to system configuration.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+    VAR cloudtrail_log_group string `/example-org/cloudtrail`
+    VAR metric_namespace string `ScanSet/Security`
+
+    # Metric filter objects
+    OBJECT root_login_filter
+        filter_name `example-org-root-login`
+        log_group_name VAR cloudtrail_log_group
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT unauthorized_api_filter
+        filter_name `example-org-unauthorized-api`
+        log_group_name VAR cloudtrail_log_group
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT sg_change_filter
+        filter_name `example-org-sg-change`
+        log_group_name VAR cloudtrail_log_group
+        region VAR aws_region
+    OBJECT_END
+
+    # Alarm objects
+    OBJECT root_login_alarm
+        alarm_name `example-org-root-login-alarm`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT unauthorized_api_alarm
+        alarm_name `example-org-unauthorized-api-alarm`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT sg_change_alarm
+        alarm_name `example-org-sg-change-alarm`
+        region VAR aws_region
+    OBJECT_END
+
+    # All filters: exist, attached to CloudTrail log group, correct namespace
+    STATE filter_in_security_namespace
+        found boolean = true
+        log_group_name string = VAR cloudtrail_log_group
+        metric_namespace string = VAR metric_namespace
+    STATE_END
+
+    # Root login filter: specific metric name
+    STATE root_login_filter_compliant
+        found boolean = true
+        log_group_name string = VAR cloudtrail_log_group
+        metric_name string = `RootLoginCount`
+        metric_namespace string = VAR metric_namespace
+    STATE_END
+
+    # Unauthorized API filter: specific metric name
+    STATE unauthorized_api_filter_compliant
+        found boolean = true
+        log_group_name string = VAR cloudtrail_log_group
+        metric_name string = `UnauthorizedAPICount`
+        metric_namespace string = VAR metric_namespace
+    STATE_END
+
+    # SG change filter: specific metric name
+    STATE sg_change_filter_compliant
+        found boolean = true
+        log_group_name string = VAR cloudtrail_log_group
+        metric_name string = `SecurityGroupChangeCount`
+        metric_namespace string = VAR metric_namespace
+    STATE_END
+
+    # All alarms: exist, correct metric config, sum statistic, 5-min period
+    STATE alarm_configured
+        found boolean = true
+        namespace string = VAR metric_namespace
+        statistic string = `Sum`
+        period int = 300
+        evaluation_periods int = 1
+        comparison_operator string = `GreaterThanOrEqualToThreshold`
+        treat_missing_data string = `notBreaching`
+    STATE_END
+
+    CRI AND
+        # Root login filter
+        CTN aws_cloudwatch_metric_filter
+            TEST all all AND
+            STATE_REF root_login_filter_compliant
+            OBJECT_REF root_login_filter
+        CTN_END
+
+        # Unauthorized API filter
+        CTN aws_cloudwatch_metric_filter
+            TEST all all AND
+            STATE_REF unauthorized_api_filter_compliant
+            OBJECT_REF unauthorized_api_filter
+        CTN_END
+
+        # Security group change filter
+        CTN aws_cloudwatch_metric_filter
+            TEST all all AND
+            STATE_REF sg_change_filter_compliant
+            OBJECT_REF sg_change_filter
+        CTN_END
+
+        # Root login alarm
+        CTN aws_cloudwatch_metric_alarm
+            TEST all all AND
+            STATE_REF alarm_configured
+            OBJECT_REF root_login_alarm
+        CTN_END
+
+        # Unauthorized API alarm
+        CTN aws_cloudwatch_metric_alarm
+            TEST all all AND
+            STATE_REF alarm_configured
+            OBJECT_REF unauthorized_api_alarm
+        CTN_END
+
+        # Security group change alarm
+        CTN aws_cloudwatch_metric_alarm
+            TEST all all AND
+            STATE_REF alarm_configured
+            OBJECT_REF sg_change_alarm
+        CTN_END
+    CRI_END
+DEF_END

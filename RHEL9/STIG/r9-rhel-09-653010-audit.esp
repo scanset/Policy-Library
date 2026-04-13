@@ -1,0 +1,52 @@
+# STIG RHEL-09-653010: rpm audit required
+# STIG ID: V-258151 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-653010-audit-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-653010: RHEL 9 audit package must be installed.`
+    description `RHEL 9 audit package must be installed.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig,package,rpm`
+
+    control_mapping `DISA-STIG:RHEL-09-653010,NIST-800-53:AU-12,NIST-800-53:AU-12(3),NIST-800-53:AU-14(1),NIST-800-53:AU-3,NIST-800-53:AU-3(1),NIST-800-53:AU-6(4),NIST-800-53:AU-7,NIST-800-53:AU-7(1),NIST-800-53:AU-8,NIST-800-53:CM-5(1)(B),NIST-800-53:MA-4(1)(A)`
+    control_objective `AU-12`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-653010.`
+
+    component_id `comp-r9-os`
+
+    impl_AU_12 `This control is validated by checking the required system configuration against the DISA STIG baseline for RHEL 9.`
+
+META_END
+
+DEF
+    OBJECT pkg_check
+        package_name `audit`
+    OBJECT_END
+
+    STATE pkg_state
+        installed boolean = true
+    STATE_END
+
+    CRI AND
+        CTN rpm_package
+            TEST all all AND
+            STATE_REF pkg_state
+            OBJECT_REF pkg_check
+        CTN_END
+    CRI_END
+DEF_END

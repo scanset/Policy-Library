@@ -1,0 +1,154 @@
+# KSI-IAM-SNU / KSI-IAM-ELP / KSI-IAM-APM: Entra ID Applications and Service Principals
+# Validates that both Entra ID app registrations and their service principals
+# are correctly configured as single-tenant identities:
+# - AWS SSO app: single-tenant, appRoleAssignmentRequired=true (only assigned users)
+# - ESP daemon app: single-tenant, one client secret, no cert credentials
+# - ESP daemon SPN: account enabled, Reader role assignment at subscription scope
+# - Both SPNs: Application type, AzureADMyOrg audience
+
+META
+    esp_id `ksi-iam-snu-elp-entra-applications-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `critical`
+
+    title `KSI-IAM-SNU / KSI-IAM-ELP / KSI-IAM-APM: Entra ID Applications and Service Principals`
+    description `Validates both Entra ID app registrations and service principals are single-tenant, correctly scoped, and the ESP daemon has subscription Reader access only`
+    author `example-security`
+    tags `azure,entra,app-registration,service-principal,fedramp,KSI-IAM-SNU,KSI-IAM-ELP,KSI-IAM-APM`
+
+    control_mapping `KSI:KSI-IAM-SNU,KSI:KSI-IAM-ELP,KSI:KSI-IAM-APM`
+    control_objective `KSI-IAM-SNU,KSI-IAM-ELP,KSI-IAM-APM`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Azure:00000000-0000-0000-0000-000000000001:entra-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `3`
+    recommendation `Ensure both app registrations are AzureADMyOrg single-tenant. The AWS SSO app must have appRoleAssignmentRequired=true. The ESP daemon must have exactly one client secret and no certificate credentials.`
+
+    component_id `comp-azure-iam`
+
+    impl_KSI_IAM_SNU `Non-user authentication is validated at the Entra ID layer by confirming both service principals are of Application type and scoped to the single tenant (signInAudience = AzureADMyOrg), ensuring neither can accept credentials from external tenants or personal Microsoft accounts. The AWS SSO service principal is validated to require explicit role assignment (appRoleAssignmentRequired = true), ensuring only users assigned through Entra groups can authenticate to AWS via SAML federation. The ESP daemon service principal is validated as enabled and operating with a client secret credential managed through Secrets Manager.`
+
+    impl_KSI_IAM_ELP `Least privilege for the ESP daemon Azure identity is validated by confirming its subscription-level RBAC assignment is scoped to the Reader role only, granting read-only access across the subscription without any write or management permissions. The Reader role is the minimum required for the daemon to enumerate Azure resources for compliance scanning. No broader roles such as Contributor or Owner are assigned.`
+
+    impl_KSI_IAM_APM `Passwordless and modern authentication methods are validated by confirming both app registrations use the AzureADMyOrg audience, restricting authentication to the organizational tenant boundary. The AWS SSO application enforces assignment-based access control (appRoleAssignmentRequired = true), ensuring human access to AWS is mediated through Entra ID group assignments rather than direct credential issuance. The ESP daemon uses a client secret with a defined expiration date, confirming credential lifecycle management is in place.`
+
+META_END
+
+DEF
+    VAR tenant_id string `00000000-0000-0000-0000-000000000001`
+    VAR subscription_id string `00000000-0000-0000-0000-000000000002`
+    VAR esp_daemon_client_id string `00000000-0000-0000-0000-000000000003`
+    VAR esp_daemon_sp_object_id string `00000000-0000-0000-0000-000000000004`
+    VAR aws_sso_client_id string `00000000-0000-0000-0000-000000000005`
+
+    # App registration objects
+    OBJECT aws_sso_app
+        display_name `example-org-aws-sso`
+    OBJECT_END
+
+    OBJECT esp_daemon_app
+        display_name `example-org-esp-daemon`
+    OBJECT_END
+
+    # Service principal objects
+    OBJECT aws_sso_sp
+        client_id VAR aws_sso_client_id
+    OBJECT_END
+
+    OBJECT esp_daemon_sp
+        client_id VAR esp_daemon_client_id
+    OBJECT_END
+
+    # Role assignment object
+    OBJECT esp_daemon_reader
+        principal_id VAR esp_daemon_sp_object_id
+        role_name `Reader`
+        scope `/subscriptions/00000000-0000-0000-0000-000000000002`
+    OBJECT_END
+
+    # AWS SSO app: single-tenant, no client secrets (SAML-based)
+    STATE aws_sso_app_compliant
+        found boolean = true
+        sign_in_audience string = `AzureADMyOrg`
+    STATE_END
+
+    # ESP daemon app: single-tenant, one client secret
+    STATE esp_daemon_app_compliant
+        found boolean = true
+        sign_in_audience string = `AzureADMyOrg`
+        has_password_credentials boolean = true
+        password_credential_count int = 1
+    STATE_END
+
+    # AWS SSO service principal: assignment required, account enabled
+    STATE aws_sso_sp_compliant
+        found boolean = true
+        account_enabled boolean = true
+        service_principal_type string = `Application`
+        sign_in_audience string = `AzureADMyOrg`
+        app_role_assignment_required boolean = true
+        key_credential_count int = 0
+    STATE_END
+
+    # ESP daemon service principal: no assignment required (service identity)
+    STATE esp_daemon_sp_compliant
+        found boolean = true
+        account_enabled boolean = true
+        service_principal_type string = `Application`
+        sign_in_audience string = `AzureADMyOrg`
+        app_role_assignment_required boolean = false
+        key_credential_count int = 0
+    STATE_END
+
+    # Reader role assignment at subscription scope
+    STATE reader_assignment_compliant
+        found boolean = true
+        role_definition_name string = `Reader`
+        principal_type string = `ServicePrincipal`
+        principal_id string = VAR esp_daemon_sp_object_id
+        scope string = `/subscriptions/00000000-0000-0000-0000-000000000002`
+    STATE_END
+
+    CRI AND
+        # App registrations
+        CTN az_entra_application
+            TEST all all AND
+            STATE_REF aws_sso_app_compliant
+            OBJECT_REF aws_sso_app
+        CTN_END
+
+        CTN az_entra_application
+            TEST all all AND
+            STATE_REF esp_daemon_app_compliant
+            OBJECT_REF esp_daemon_app
+        CTN_END
+
+        # Service principals
+        CTN az_entra_service_principal
+            TEST all all AND
+            STATE_REF aws_sso_sp_compliant
+            OBJECT_REF aws_sso_sp
+        CTN_END
+
+        CTN az_entra_service_principal
+            TEST all all AND
+            STATE_REF esp_daemon_sp_compliant
+            OBJECT_REF esp_daemon_sp
+        CTN_END
+
+        # ESP daemon Reader role assignment
+        CTN az_role_assignment
+            TEST all all AND
+            STATE_REF reader_assignment_compliant
+            OBJECT_REF esp_daemon_reader
+        CTN_END
+    CRI_END
+DEF_END

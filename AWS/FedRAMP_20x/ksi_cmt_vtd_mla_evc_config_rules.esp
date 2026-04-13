@@ -1,0 +1,136 @@
+# KSI-CMT-VTD / KSI-MLA-EVC / KSI-PIY-GIV: AWS Config Rule Compliance
+# Validates all seven AWS Config rules are ACTIVE and COMPLIANT:
+# - ebs-encrypted: EBS volumes encrypted (KSI-SVC-VRI)
+# - s3-no-public-access: S3 blocks public access (KSI-CNA-RNT)
+# - cloudtrail-enabled: CloudTrail is enabled (KSI-MLA-LET)
+# - root-mfa-enabled: Root account has MFA (KSI-IAM-MFA)
+# - secrets-rotation: Secrets have rotation enabled (KSI-SVC-ASM)
+# - guardduty-enabled: GuardDuty is enabled (KSI-MLA-OSM)
+# - vpc-flow-logs: VPC flow logs are enabled (KSI-MLA-LET)
+
+META
+    esp_id `ksi-cmt-vtd-mla-evc-config-rules-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    title `KSI-CMT-VTD / KSI-MLA-EVC / KSI-PIY-GIV: AWS Config Rule Compliance`
+    description `Validates all seven AWS Config managed rules are ACTIVE and COMPLIANT, confirming continuous automated evaluation of key security controls`
+    author `example-security`
+    tags `aws,config,compliance,fedramp,KSI-CMT-VTD,KSI-MLA-EVC,KSI-PIY-GIV`
+
+    control_mapping `KSI:KSI-CMT-VTD,KSI:KSI-MLA-EVC,KSI:KSI-PIY-GIV`
+    control_objective `KSI-CMT-VTD,KSI-MLA-EVC,KSI-PIY-GIV`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:logging-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `3`
+    recommendation `Ensure all Config rules are in ACTIVE state and COMPLIANT. NON_COMPLIANT results require remediation of the underlying resources.`
+
+    component_id `comp-aws-logging`
+
+    impl_KSI_CMT_VTD `Validation throughout deployment is confirmed by verifying that AWS managed Config rules continuously evaluate key security controls across the resource inventory. Each rule is validated to be in ACTIVE state and returning a COMPLIANT result, confirming that the security controls being monitored are correctly configured across all in-scope resources.`
+
+    impl_KSI_MLA_EVC `Configuration evaluation is validated by confirming each of the seven AWS Config rules produces a definitive compliance result rather than INSUFFICIENT_DATA or NOT_APPLICABLE. The rules collectively evaluate encryption, network access, authentication, secret management, threat detection, and network logging controls, providing continuous automated assurance that the evaluated controls remain in the expected configuration state.`
+
+    impl_KSI_PIY_GIV `Resource inventory generation is supported by confirming that AWS Config rules are evaluating resources across the account, which requires an active resource inventory maintained by the Config recorder. COMPLIANT results across all seven rules confirm the inventory is complete enough to evaluate the full scope of covered resource types.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+
+    OBJECT ebs_encrypted_rule
+        rule_name `example-org-ebs-encrypted`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT s3_public_access_rule
+        rule_name `example-org-s3-no-public-access`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT cloudtrail_enabled_rule
+        rule_name `example-org-cloudtrail-enabled`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT root_mfa_rule
+        rule_name `example-org-root-mfa-enabled`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT secrets_rotation_rule
+        rule_name `example-org-secrets-rotation`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT guardduty_enabled_rule
+        rule_name `example-org-guardduty-enabled`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT vpc_flow_logs_rule
+        rule_name `example-org-vpc-flow-logs`
+        region VAR aws_region
+    OBJECT_END
+
+    # All rules: ACTIVE and COMPLIANT
+    STATE rule_compliant
+        found boolean = true
+        rule_state string = `ACTIVE`
+        compliance_type string = `COMPLIANT`
+        source_owner string = `AWS`
+    STATE_END
+
+    CRI AND
+        CTN aws_config_rule
+            TEST all all AND
+            STATE_REF rule_compliant
+            OBJECT_REF ebs_encrypted_rule
+        CTN_END
+
+        CTN aws_config_rule
+            TEST all all AND
+            STATE_REF rule_compliant
+            OBJECT_REF s3_public_access_rule
+        CTN_END
+
+        CTN aws_config_rule
+            TEST all all AND
+            STATE_REF rule_compliant
+            OBJECT_REF cloudtrail_enabled_rule
+        CTN_END
+
+        CTN aws_config_rule
+            TEST all all AND
+            STATE_REF rule_compliant
+            OBJECT_REF root_mfa_rule
+        CTN_END
+
+        CTN aws_config_rule
+            TEST all all AND
+            STATE_REF rule_compliant
+            OBJECT_REF secrets_rotation_rule
+        CTN_END
+
+        CTN aws_config_rule
+            TEST all all AND
+            STATE_REF rule_compliant
+            OBJECT_REF guardduty_enabled_rule
+        CTN_END
+
+        CTN aws_config_rule
+            TEST all all AND
+            STATE_REF rule_compliant
+            OBJECT_REF vpc_flow_logs_rule
+        CTN_END
+    CRI_END
+DEF_END

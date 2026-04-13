@@ -1,0 +1,91 @@
+# KSI-CMT-VTD / KSI-MLA-EVC / KSI-SVC-ACM: AWS Config Continuous Recording
+# Validates that AWS Config is continuously recording all resource types
+# including global IAM resources, delivering successfully, and that
+# the Config IAM role is correctly scoped:
+# - Config recorder: active, all supported, global types, CONTINUOUS
+# - Config IAM role: trusts config.amazonaws.com with managed policy
+
+META
+    esp_id `ksi-cmt-vtd-mla-evc-config-recorder-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    title `KSI-CMT-VTD / KSI-MLA-EVC / KSI-SVC-ACM: AWS Config Continuous Recording`
+    description `Validates AWS Config is continuously recording all resource configurations including global IAM resources and delivering successfully`
+    author `example-security`
+    tags `aws,config,iam,fedramp,KSI-CMT-VTD,KSI-MLA-EVC,KSI-SVC-ACM`
+
+    control_mapping `KSI:KSI-CMT-VTD,KSI:KSI-MLA-EVC,KSI:KSI-SVC-ACM`
+    control_objective `KSI-CMT-VTD,KSI-MLA-EVC,KSI-SVC-ACM`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:logging-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Ensure AWS Config recorder is set to all_supported = true with include_global_resource_types = true and recording = true.`
+
+    component_id `comp-aws-logging`
+
+    impl_KSI_CMT_VTD `Validation throughout deployment is confirmed by verifying that AWS Config continuously records the configuration state of all supported resource types, including global IAM resources. This provides a continuous configuration history that enables detection of any configuration drift from the approved baseline across the full resource inventory.`
+
+    impl_KSI_MLA_EVC `Configuration evaluation is validated by confirming the AWS Config recorder is actively recording (recording = true) with a last delivery status of SUCCESS, and that the recording frequency is CONTINUOUS rather than periodic. This ensures configuration changes are captured in near real-time rather than on a scheduled basis, supporting timely detection of unauthorized configuration changes.`
+
+    impl_KSI_SVC_ACM `Automated configuration management capability is validated by confirming AWS Config is recording all resource types including global IAM resources, providing the configuration inventory foundation required for automated compliance evaluation via Config rules. The Config IAM role is confirmed to trust only config.amazonaws.com, ensuring configuration recording authorization is scoped to the Config service.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+
+    OBJECT config_recorder
+        recorder_name `example-org-config-recorder`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT config_role
+        role_name `example-org-config-role`
+        region VAR aws_region
+    OBJECT_END
+
+    # Config recorder: active, all resources, global types, continuous
+    STATE recorder_compliant
+        found boolean = true
+        recording boolean = true
+        all_supported boolean = true
+        include_global_resource_types boolean = true
+        recording_frequency string = `CONTINUOUS`
+        last_status string = `SUCCESS`
+    STATE_END
+
+    # Config role: trusts config.amazonaws.com, has managed policy attached
+    STATE config_role_compliant
+        found boolean = true
+        attached_policy_count int >= 1
+        record
+            field AssumeRolePolicyDocument.Statement.0.Principal.Service string = `config.amazonaws.com`
+            field AssumeRolePolicyDocument.Statement.0.Effect string = `Allow`
+            field AssumeRolePolicyDocument.Statement.0.Action string = `sts:AssumeRole`
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN aws_config_recorder
+            TEST all all AND
+            STATE_REF recorder_compliant
+            OBJECT_REF config_recorder
+        CTN_END
+
+        CTN aws_iam_role
+            TEST all all AND
+            STATE_REF config_role_compliant
+            OBJECT_REF config_role
+        CTN_END
+    CRI_END
+DEF_END

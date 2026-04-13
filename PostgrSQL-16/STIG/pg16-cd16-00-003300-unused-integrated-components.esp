@@ -1,0 +1,53 @@
+# STIG CD16-00-003300: Unused database components that are integrated in PostgreSQL
+# STIG ID: V-261887 (MEDIUM)
+
+META
+    esp_id `pg16-cd16-00-003300-unused-integrated-components-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-003300: Unused database components that are integrated in PostgreSQL and cannot be unins`
+    description `Unused database components that are integrated in PostgreSQL and cannot be uninstalled must be disabled.`
+    author `example-security`
+    tags `pg16,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-003300,NIST-800-53:CM-7`
+    control_objective `CM-7`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CD16-00-003300.`
+
+    component_id `comp-pg16-db`
+
+    impl_CM_7 `This control is validated by checking the required PostgreSQL configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT target
+        path `/usr/pgsql-16/bin`
+    OBJECT_END
+
+    STATE meta_check
+        exists boolean = true
+        permissions string = `0755`
+    STATE_END
+
+    CRI AND
+        CTN file_metadata
+            TEST all all AND
+            STATE_REF meta_check
+            OBJECT_REF target
+        CTN_END
+    CRI_END
+DEF_END

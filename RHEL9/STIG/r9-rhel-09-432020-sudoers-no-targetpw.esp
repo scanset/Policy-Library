@@ -1,0 +1,52 @@
+# STIG RHEL-09-432020: RHEL 9 must use the invoking user's password for privilege escalation when using
+# STIG ID: V-258085 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-432020-sudoers-no-targetpw-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-432020: RHEL 9 must use the invoking user's password for privilege escalation when using`
+    description `RHEL 9 must use the invoking user's password for privilege escalation when using 'sudo'.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig`
+
+    control_mapping `DISA-STIG:RHEL-09-432020,NIST-800-53:CM-6`
+    control_objective `CM-6`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-432020.`
+
+    component_id `comp-r9-os`
+
+    impl_CM_6 `This control is validated by checking /etc/sudoers for the required configuration.`
+
+META_END
+
+DEF
+    OBJECT target_file
+        path `/etc/sudoers`
+    OBJECT_END
+
+    STATE content_check
+        content string contains `!targetpw`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF content_check
+            OBJECT_REF target_file
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,0 +1,113 @@
+# KSI-SCR-MON: Supply Chain Risk Monitoring
+# Validates that ScanSet automatically monitors for upstream vulnerabilities:
+# - GuardDuty EBS malware protection: enabled, scanning EC2 instance volumes
+# - ECR repository: immutable tags, scan-on-push enabled, encrypted
+
+META
+    # === Required ===
+    esp_id `ksi-scr-mon-supply-chain-monitoring-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    # === Documentation ===
+    title `KSI-SCR-MON: Supply Chain Risk Monitoring`
+    description `Validates GuardDuty EBS malware protection and ECR repository hardening satisfy KSI-SCR-MON automated monitoring of third-party software for upstream vulnerabilities`
+    author `example-security`
+    tags `aws,guardduty,ecr,supply-chain,malware,scanning,fedramp,KSI-SCR-MON`
+
+    # === Control Mapping ===
+    control_mapping `KSI:KSI-SCR-MON`
+    control_objective `KSI-SCR-MON`
+
+    # === Assessment ===
+    assessment_method `TEST`
+
+    # === Implementation ===
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    # === Inheritance ===
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:security-infrastructure`
+    customer_responsibility `configuration`
+
+    # === Remediation ===
+    remediation_days `3`
+    recommendation `Enable GuardDuty EBS malware protection and configure ECR repositories with immutable tags and scan-on-push`
+
+    # === Component ===
+    component_id `comp-aws-security`
+
+    # === Implementation Narratives ===
+    impl_KSI_SCR_MON `Vulnerability scanning of third-party software components is validated by confirming the ECR repository has scan-on-push enabled (scan_on_push = true). This ensures every container image pushed to the registry is automatically scanned for known vulnerabilities before deployment, satisfying the requirement to automatically monitor third-party software for upstream vulnerabilities.`
+
+    impl_KSI_SCR_MON `Malware protection is validated by confirming GuardDuty has the EBS_MALWARE_PROTECTION feature in ENABLED status. This provides automated malware scanning of EBS volumes attached to EC2 instances when GuardDuty identifies suspicious findings, satisfying the requirement to monitor for malicious code in machine-based information resources.`
+
+    impl_KSI_SCR_MON `External information system services monitoring is validated by confirming the ECR repository enforces image tag immutability (image_tag_mutability = IMMUTABLE). Immutable tags prevent container image substitution attacks where a referenced tag could be silently overwritten with a compromised image, directly addressing supply chain integrity for containerized third-party components.`
+
+    impl_KSI_SCR_MON `Supply chain risk monitoring at the infrastructure level is validated by confirming both GuardDuty EBS malware protection (active scanning of instance volumes) and ECR scan-on-push (vulnerability scanning of container images) are enabled. These controls collectively provide automated continuous monitoring of the software supply chain as required by KSI-SCR-MON.`
+
+META_END
+
+DEF
+    # ==========================================================================
+    # Variables
+    # ==========================================================================
+    VAR aws_region string `us-east-1`
+    VAR guardduty_detector_id string `00000000000000000000000000000000`
+    VAR tlog_repo_name string `scanset/transparency-log`
+
+    # ==========================================================================
+    # Objects
+    # ==========================================================================
+
+    OBJECT main_detector
+        detector_id VAR guardduty_detector_id
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT tlog_repository
+        repository_name VAR tlog_repo_name
+        region VAR aws_region
+    OBJECT_END
+
+    # ==========================================================================
+    # States
+    # ==========================================================================
+
+    # GuardDuty: EBS malware protection active (supply chain monitoring at runtime)
+    STATE guardduty_malware_protection_active
+        found boolean = true
+        status string = `ENABLED`
+        feature_ebs_malware_protection string = `ENABLED`
+    STATE_END
+
+    # ECR repository: immutable tags, scan-on-push, encrypted (supply chain integrity)
+    STATE ecr_supply_chain_hardened
+        found boolean = true
+        image_tag_mutability string = `IMMUTABLE`
+        scan_on_push boolean = true
+        encryption_type string = `AES256`
+    STATE_END
+
+    # ==========================================================================
+    # Criteria
+    # ==========================================================================
+    CRI AND
+        # GuardDuty EBS malware protection enabled
+        CTN aws_guardduty_detector
+            TEST all all AND
+            STATE_REF guardduty_malware_protection_active
+            OBJECT_REF main_detector
+        CTN_END
+
+        # ECR repository hardened for supply chain integrity
+        CTN aws_ecr_repository
+            TEST all all AND
+            STATE_REF ecr_supply_chain_hardened
+            OBJECT_REF tlog_repository
+        CTN_END
+    CRI_END
+DEF_END

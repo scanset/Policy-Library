@@ -1,0 +1,54 @@
+# SRG SRG-APP-000120-WSR-000070: The log information from the web server must be protected fr
+# STIG ID: V-206370 (MEDIUM)
+# Check: Web server file permissions
+
+META
+    esp_id `web-srg-srg-app-000120-wsr-000070-log-file-delete-perms-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `web-server`
+    criticality `high`
+
+    title `SRG SRG-APP-000120-WSR-000070: The log information from the web server must be protected from unauthorized dele`
+    description `The log information from the web server must be protected from unauthorized deletion.`
+    author `example-security`
+    tags `web-server,srg,disa-stig,permissions,internal`
+
+    control_mapping `DISA-STIG:SRG-APP-000120-WSR-000070,NIST-800-53:AU-9`
+    control_objective `AU-9`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `WebServer:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Web Server SRG guidance for SRG-APP-000120-WSR-000070.`
+
+    component_id `comp-web-server`
+
+    impl_AU_9 `This control is validated by probing the web server configuration or network endpoint against the DISA Web Server SRG baseline.`
+
+META_END
+
+DEF
+    OBJECT target
+        path `/var/log/nginx`
+    OBJECT_END
+
+    STATE perms_check
+        exists boolean = true
+        permissions string = `0640`
+    STATE_END
+
+    CRI AND
+        CTN file_metadata
+            TEST all all AND
+            STATE_REF perms_check
+            OBJECT_REF target
+        CTN_END
+    CRI_END
+DEF_END

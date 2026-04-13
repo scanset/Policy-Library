@@ -1,0 +1,68 @@
+# STIG AS24-U2-000580: The Apache web server document directory must be in a separa
+# STIG ID: V-214290 (MEDIUM)
+
+META
+    esp_id `apache-as24-u2-000580-docroot-partition-site-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `apache`
+    criticality `high`
+
+    title `STIG AS24-U2-000580: The Apache web server document directory must be in a separate partition from th`
+    description `The Apache web server document directory must be in a separate partition from the Apache web servers system files.`
+    author `example-security`
+    tags `apache,stig,disa-stig,combined`
+
+    control_mapping `DISA-STIG:AS24-U2-000580,NIST-800-53:SC-3`
+    control_objective `SC-3`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Apache:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Apache STIG guidance for AS24-U2-000580.`
+
+    component_id `comp-apache-web`
+
+    impl_SC_3 `This control is validated by checking the Apache HTTP server configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    VAR config_path string `/etc/httpd/conf/httpd.conf`
+
+    OBJECT module_check
+        module `ssl_module`
+    OBJECT_END
+
+    STATE module_loaded
+        loaded boolean = true
+    STATE_END
+
+    OBJECT httpd_config
+        path VAR config_path
+    OBJECT_END
+
+    STATE directive_present
+        content string contains `DocumentRoot`
+    STATE_END
+
+    CRI AND
+        CTN apache_module
+            TEST all all AND
+            STATE_REF module_loaded
+            OBJECT_REF module_check
+        CTN_END
+
+        CTN file_content
+            TEST all all AND
+            STATE_REF directive_present
+            OBJECT_REF httpd_config
+        CTN_END
+    CRI_END
+DEF_END

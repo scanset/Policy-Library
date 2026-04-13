@@ -1,0 +1,38 @@
+# CIS AWS Storage Services Benchmark v1.0.0
+# CIS 6.4 - Ensure configuration of replication settings
+
+META
+    esp_id `cis-aws-stor-6-4`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `medium`
+    control_mapping `CIS-AWS-Storage:6.4,NIST-800-53:AC-2,NIST-800-53:AT-2,KSI:KSI-CED-RGT,KSI:KSI-CED-RST`
+    title `CIS 6.4 - Ensure configuration of replication settings`
+    description `Verify backup plan includes cross-region copy to secondary vault.`
+    author `example-security`
+    assessment_method `TEST`
+    implementation_status `implemented`
+    impl_AC_2 `CIS 6.4: Ensure configuration of replication settings`
+    impl_AT_2 `CIS 6.4: Ensure configuration of replication settings`
+    impl_IA_2 `CIS 6.4: Ensure configuration of replication settings`
+META_END
+
+DEF
+    OBJECT backup_plan
+        plan_name `BACKUP_PLAN_NAME`
+    OBJECT_END
+
+    STATE backup_plan_check
+        found boolean = true
+        has_cross_region_copy boolean = true
+    STATE_END
+
+    CRI AND
+        CTN aws_backup_plan
+            TEST all all AND
+            STATE_REF backup_plan_check
+            OBJECT_REF backup_plan
+        CTN_END
+    CRI_END
+DEF_END

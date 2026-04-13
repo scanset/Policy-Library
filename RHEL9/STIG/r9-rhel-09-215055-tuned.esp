@@ -1,0 +1,52 @@
+# STIG RHEL-09-215055: rpm tuned prohibited
+# STIG ID: V-257834 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-215055-tuned-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-215055: RHEL 9 must not have the tuned package installed.`
+    description `RHEL 9 must not have the tuned package installed.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig,package,rpm`
+
+    control_mapping `DISA-STIG:RHEL-09-215055,NIST-800-53:CM-7`
+    control_objective `CM-7`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-215055.`
+
+    component_id `comp-r9-os`
+
+    impl_CM_7 `This control is validated by checking the required system configuration against the DISA STIG baseline for RHEL 9.`
+
+META_END
+
+DEF
+    OBJECT pkg_check
+        package_name `tuned`
+    OBJECT_END
+
+    STATE pkg_state
+        installed boolean = false
+    STATE_END
+
+    CRI AND
+        CTN rpm_package
+            TEST all all AND
+            STATE_REF pkg_state
+            OBJECT_REF pkg_check
+        CTN_END
+    CRI_END
+DEF_END

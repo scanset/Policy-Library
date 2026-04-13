@@ -1,0 +1,53 @@
+# STIG CD16-00-009000: When invalid inputs are received, PostgreSQL must behave in 
+# STIG ID: V-261934 (MEDIUM)
+
+META
+    esp_id `pg16-cd16-00-009000-invalid-input-behavior-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-009000: When invalid inputs are received, PostgreSQL must behave in a predictable and do`
+    description `When invalid inputs are received, PostgreSQL must behave in a predictable and documented manner that reflects organizational and system objectives.`
+    author `example-security`
+    tags `pg16,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-009000,NIST-800-53:SI-10(3)`
+    control_objective `SI-10(3)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CD16-00-009000.`
+
+    component_id `comp-pg16-db`
+
+    impl_SI_10_3 `This control is validated by checking the required PostgreSQL configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT pg_param
+        parameter `shared_preload_libraries`
+    OBJECT_END
+
+    STATE param_state
+        found boolean = true
+        value string contains `pgaudit`
+    STATE_END
+
+    CRI AND
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF param_state
+            OBJECT_REF pg_param
+        CTN_END
+    CRI_END
+DEF_END

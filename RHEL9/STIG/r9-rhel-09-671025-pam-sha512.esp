@@ -1,0 +1,52 @@
+# STIG RHEL-09-671025: RHEL 9 pam_unix.so module must be configured in the password
+# STIG ID: V-258233 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-671025-pam-sha512-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-671025: RHEL 9 pam_unix.so module must be configured in the password-auth file to use a `
+    description `RHEL 9 pam_unix.so module must be configured in the password-auth file to use a FIPS 140-3 approved cryptographic hashing algorithm for system authentication.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig`
+
+    control_mapping `DISA-STIG:RHEL-09-671025,NIST-800-53:IA-5(1)(D)`
+    control_objective `IA-5(1)(D)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-671025.`
+
+    component_id `comp-r9-os`
+
+    impl_IA_5_1_D `This control is validated by checking the required system configuration against the DISA STIG baseline for RHEL 9.`
+
+META_END
+
+DEF
+    OBJECT target_file
+        path `/etc/pam.d/password-auth`
+    OBJECT_END
+
+    STATE content_check
+        content string contains `sha512`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF content_check
+            OBJECT_REF target_file
+        CTN_END
+    CRI_END
+DEF_END

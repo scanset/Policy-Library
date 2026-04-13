@@ -1,0 +1,65 @@
+# STIG CD16-00-002400: PostgreSQL must protect its audit configuration from unauthorized modification.
+# STIG ID: V-261879 (MEDIUM)
+
+META
+    esp_id `pg16-cd16-00-002400-audit-config-protection-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-002400: PostgreSQL must protect its audit configuration from unauthorized modification.`
+    description `PostgreSQL must protect its audit configuration from unauthorized modification.`
+    author `example-security`
+    tags `pg16,stig,permissions,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-002400,NIST-800-53:AU-9`
+    control_objective `AU-9`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Ensure file and directory permissions are set correctly for the PostgreSQL data and log directories.`
+
+    component_id `comp-pg16-db`
+
+    impl_AU_9 `PostgreSQL implements this control by restricting filesystem permissions on critical database files and directories, ensuring only the postgres service account has access.`
+
+META_END
+
+DEF
+    OBJECT target
+        path `/var/lib/pgsql/16/data/postgresql.conf`
+    OBJECT_END
+    OBJECT pg_param_0
+        parameter `log_file_mode`
+    OBJECT_END
+
+    STATE perms_ok
+        exists boolean = true
+        permissions string = `0600`
+    STATE_END
+    STATE param_state_0
+        found boolean = true
+        value string = `0600`
+    STATE_END
+
+    CRI AND
+        CTN file_metadata
+            TEST all all AND
+            STATE_REF perms_ok
+            OBJECT_REF target
+        CTN_END
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF param_state_0
+            OBJECT_REF pg_param_0
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,0 +1,51 @@
+# CIS AWS Storage Services Benchmark v1.0.0
+# CIS 2.2 - Ensure configuring Security Groups
+
+META
+    esp_id `cis-aws-stor-2-2`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `medium`
+    control_mapping `CIS-AWS-Storage:2.2,NIST-800-53:SC-23,NIST-800-53:SI-8,KSI:KSI-CNA-RNT,KSI:KSI-CNA-RVP`
+    title `CIS 2.2 - Ensure configuring Security Groups`
+    description `Verify default security group denies all traffic and VM SG does not allow ingress from anywhere.`
+    author `example-security`
+    assessment_method `TEST`
+    implementation_status `implemented`
+    impl_SC_23 `CIS 2.2: Ensure configuring Security Groups`
+    impl_SI_8 `CIS 2.2: Ensure configuring Security Groups`
+META_END
+
+DEF
+    OBJECT default_sg
+        group_id `SECURE_PORTS_SG_ID`
+    OBJECT_END
+
+    OBJECT vm_sg
+        group_id `VM_SECURITY_GROUP_ID`
+    OBJECT_END
+
+    STATE default_sg_check
+        found boolean = true
+        has_ingress_from_anywhere boolean = false
+    STATE_END
+
+    STATE vm_sg_check
+        found boolean = true
+        has_ingress_from_anywhere boolean = false
+    STATE_END
+
+    CRI AND
+        CTN aws_security_group
+            TEST all all AND
+            STATE_REF default_sg_check
+            OBJECT_REF default_sg
+        CTN_END
+        CTN aws_security_group
+            TEST all all AND
+            STATE_REF vm_sg_check
+            OBJECT_REF vm_sg
+        CTN_END
+    CRI_END
+DEF_END

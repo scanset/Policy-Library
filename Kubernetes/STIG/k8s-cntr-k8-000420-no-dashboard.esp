@@ -1,0 +1,54 @@
+# STIG CNTR-K8-000420: Kubernetes dashboard must not be enabled.
+# STIG ID: V-242395 (MEDIUM)
+
+META
+    esp_id `k8s-cntr-k8-000420-no-dashboard-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `kubernetes`
+    criticality `high`
+
+    title `STIG CNTR-K8-000420: Kubernetes dashboard must not be enabled.`
+    description `Kubernetes dashboard must not be enabled.`
+    author `example-security`
+    tags `kubernetes,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CNTR-K8-000420,NIST-800-53:AC-3`
+    control_objective `AC-3`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Kubernetes:cluster:k8s-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CNTR-K8-000420.`
+
+    component_id `comp-k8s-cluster`
+
+    impl_AC_3 `This control is validated by checking the required Kubernetes configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT resource_check
+        kind `Pod`
+        namespace `kube-system`
+        label_selector `k8s-app=kubernetes-dashboard`
+    OBJECT_END
+
+    STATE resource_state
+         count int = 0
+    STATE_END
+
+    CRI AND
+        CTN k8s_resource
+            TEST all all AND
+            STATE_REF resource_state
+            OBJECT_REF resource_check
+        CTN_END
+    CRI_END
+DEF_END

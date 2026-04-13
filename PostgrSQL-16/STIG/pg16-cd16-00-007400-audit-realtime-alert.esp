@@ -1,0 +1,53 @@
+# STIG CD16-00-007400: PostgreSQL must provide an immediate real-time alert to appr
+# STIG ID: V-261920 (MEDIUM)
+
+META
+    esp_id `pg16-cd16-00-007400-audit-realtime-alert-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-007400: PostgreSQL must provide an immediate real-time alert to appropriate support staf`
+    description `PostgreSQL must provide an immediate real-time alert to appropriate support staff of all audit log failures.`
+    author `example-security`
+    tags `pg16,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-007400,NIST-800-53:AU-5(2)`
+    control_objective `AU-5(2)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CD16-00-007400.`
+
+    component_id `comp-pg16-db`
+
+    impl_AU_5_2 `This control is validated by checking the required PostgreSQL configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT pg_param
+        parameter `log_destination`
+    OBJECT_END
+
+    STATE param_state
+        found boolean = true
+        value string = `stderr`
+    STATE_END
+
+    CRI AND
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF param_state
+            OBJECT_REF pg_param
+        CTN_END
+    CRI_END
+DEF_END

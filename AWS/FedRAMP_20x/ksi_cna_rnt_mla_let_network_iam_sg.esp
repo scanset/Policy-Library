@@ -1,0 +1,96 @@
+# KSI-CNA-RNT / KSI-MLA-LET: Network Supporting Infrastructure
+# Validates the supporting IAM role and security group for VPC networking:
+# - Flow logs IAM role: trusts vpc-flow-logs.amazonaws.com, inline policy present
+# - VPCE security group: ingress only 443 from VPC CIDR, no open ingress
+
+META
+    esp_id `ksi-cna-rnt-mla-let-network-iam-sg-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    title `KSI-CNA-RNT / KSI-MLA-LET: Network Supporting Infrastructure`
+    description `Validates the VPC flow logs IAM role trust policy and the VPC endpoint security group ingress restriction`
+    author `example-security`
+    tags `aws,iam,security-group,flow-logs,vpce,fedramp,KSI-CNA-RNT,KSI-MLA-LET`
+
+    control_mapping `KSI:KSI-CNA-RNT,KSI:KSI-MLA-LET`
+    control_objective `KSI-CNA-RNT,KSI-MLA-LET`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:network-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Ensure the flow logs role trusts only vpc-flow-logs.amazonaws.com. Ensure the VPCE security group allows only port 443 from the VPC CIDR with no open 0.0.0.0/0 ingress.`
+
+    component_id `comp-aws-network`
+
+    impl_KSI_MLA_LET `Flow log delivery authorization is validated by confirming the flow logs IAM role (example-org-flow-logs-role) trusts only vpc-flow-logs.amazonaws.com (AssumeRolePolicyDocument.Statement.0.Principal.Service = vpc-flow-logs.amazonaws.com). This confirms the role cannot be assumed by any other service, ensuring only the VPC Flow Logs service can deliver network event data to CloudWatch. The presence of one inline policy (inline_policy_count = 1) confirms the CloudWatch Logs write permissions are attached, authorizing delivery.`
+
+    impl_KSI_CNA_RNT `Network traffic restriction for VPC endpoint access is validated by confirming the VPCE security group (example-org-vpce-sg) allows only inbound HTTPS (port 443) from the VPC CIDR 10.0.0.0/16 (has_ingress_from_anywhere = false, ingress_rule_count = 1). This ensures only resources within the VPC can reach the Interface VPC endpoints, preventing any external access to AWS service endpoints. The allow-all egress is correct and expected for endpoint security groups since the VPC endpoints themselves must be reachable from within the VPC.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+    VAR vpc_id string `vpc-0123456789abcdef0`
+    VAR vpce_sg_id string `sg-0123456789abcdef0`
+
+    OBJECT flow_logs_role
+        role_name `example-org-flow-logs-role`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT vpce_sg
+        group_id VAR vpce_sg_id
+        region VAR aws_region
+    OBJECT_END
+
+    # Flow logs role: trusts vpc-flow-logs.amazonaws.com, has inline policy
+    STATE flow_logs_role_compliant
+        found boolean = true
+        attached_policy_count int = 0
+        inline_policy_count int = 1
+        record
+            field AssumeRolePolicyDocument.Statement.0.Principal.Service string = `vpc-flow-logs.amazonaws.com`
+            field AssumeRolePolicyDocument.Statement.0.Effect string = `Allow`
+            field AssumeRolePolicyDocument.Statement.0.Action string = `sts:AssumeRole`
+        record_end
+    STATE_END
+
+    # VPCE SG: only 443 from VPC CIDR, no open ingress
+    STATE vpce_sg_compliant
+        found boolean = true
+        vpc_id string = VAR vpc_id
+        has_ingress_from_anywhere boolean = false
+        ingress_rule_count int = 1
+        record
+            field IpPermissions.0.FromPort int = 443
+            field IpPermissions.0.ToPort int = 443
+            field IpPermissions.0.IpProtocol string = `tcp`
+            field IpPermissions.0.IpRanges.0.CidrIp string = `10.0.0.0/16`
+        record_end
+    STATE_END
+
+    CRI AND
+        # Flow logs role trusts only vpc-flow-logs.amazonaws.com
+        CTN aws_iam_role
+            TEST all all AND
+            STATE_REF flow_logs_role_compliant
+            OBJECT_REF flow_logs_role
+        CTN_END
+
+        # VPCE SG allows only 443 from VPC CIDR
+        CTN aws_security_group
+            TEST all all AND
+            STATE_REF vpce_sg_compliant
+            OBJECT_REF vpce_sg
+        CTN_END
+    CRI_END
+DEF_END

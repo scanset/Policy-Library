@@ -1,0 +1,54 @@
+# STIG AS24-U2-000360: The Apache web server must be configured to use a specified 
+# STIG ID: V-214285 (MEDIUM)
+
+META
+    esp_id `apache-as24-u2-000360-vhost-ip-port-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `apache`
+    criticality `high`
+
+    title `STIG AS24-U2-000360: The Apache web server must be configured to use a specified IP address and port.`
+    description `The Apache web server must be configured to use a specified IP address and port.`
+    author `example-security`
+    tags `apache,stig,disa-stig,config`
+
+    control_mapping `DISA-STIG:AS24-U2-000360,NIST-800-53:CM-7`
+    control_objective `CM-7`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Apache:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Apache STIG guidance for AS24-U2-000360.`
+
+    component_id `comp-apache-web`
+
+    impl_CM_7 `This control is validated by checking the Apache HTTP server configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    VAR config_path string `/etc/httpd/conf/httpd.conf`
+
+    OBJECT httpd_config
+        path VAR config_path
+    OBJECT_END
+
+    STATE config_check
+        content string contains `VirtualHost`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF config_check
+            OBJECT_REF httpd_config
+        CTN_END
+    CRI_END
+DEF_END

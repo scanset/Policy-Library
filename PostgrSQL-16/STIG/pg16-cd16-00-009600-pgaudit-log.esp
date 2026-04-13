@@ -1,0 +1,75 @@
+# STIG CD16-00-009600: PostgreSQL Audit Logging Configuration
+# STIG ID: V-261940 (MEDIUM) - Must generate audit records for data access
+# Check: psql -c "SHOW pgaudit.log" -> must contain "ddl, write, role"
+# Finding: pgaudit.log does not include required audit categories
+
+META
+    esp_id `pg16-cd16-00-009600-pgaudit-log-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-009600: PostgreSQL Audit Logging Configuration`
+    description `Validates that pgaudit.log includes the required audit categories (ddl, write, role) so that PostgreSQL generates audit records when security-relevant operations occur. Without these categories, privilege changes, data modifications, and schema alterations go unaudited.`
+    author `example-security`
+    tags `pg16,stig,pgaudit,audit,au-12,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-009600,NIST-800-53:AU-12`
+    control_objective `AU-12`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Set pgaudit.log to include at minimum ddl, write, and role categories via ALTER SYSTEM SET pgaudit.log = 'ddl, role, write, read', then reload the PostgreSQL service.`
+
+    component_id `comp-pg16-db`
+
+    impl_AU_12 `PostgreSQL implements audit record generation through the pgaudit extension. The pgaudit.log parameter is validated to confirm that ddl, write, and role event categories are actively logged. DDL auditing captures schema changes, write auditing captures data modifications, and role auditing captures privilege and access control changes. These categories ensure that security-relevant operations produce audit records as required by the organizationally defined auditable event list.`
+
+META_END
+
+DEF
+    OBJECT pg_audit_config
+        parameter `pgaudit.log`
+    OBJECT_END
+
+    STATE audit_has_ddl
+        found boolean = true
+        value string contains `ddl`
+    STATE_END
+
+    STATE audit_has_write
+        found boolean = true
+        value string contains `write`
+    STATE_END
+
+    STATE audit_has_role
+        found boolean = true
+        value string contains `role`
+    STATE_END
+
+    CRI AND
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF audit_has_ddl
+            OBJECT_REF pg_audit_config
+        CTN_END
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF audit_has_write
+            OBJECT_REF pg_audit_config
+        CTN_END
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF audit_has_role
+            OBJECT_REF pg_audit_config
+        CTN_END
+    CRI_END
+DEF_END

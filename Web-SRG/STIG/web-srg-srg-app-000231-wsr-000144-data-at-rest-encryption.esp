@@ -1,0 +1,55 @@
+# SRG SRG-APP-000231-WSR-000144: Information at rest must be encrypted using a DOD-accepted a
+# STIG ID: V-206407 (MEDIUM)
+# Check: Web server configuration setting
+
+META
+    esp_id `web-srg-srg-app-000231-wsr-000144-data-at-rest-encryption-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `web-server`
+    criticality `high`
+
+    title `SRG SRG-APP-000231-WSR-000144: Information at rest must be encrypted using a DOD-accepted algorithm to protect `
+    description `Information at rest must be encrypted using a DOD-accepted algorithm to protect the confidentiality and integrity of the information.`
+    author `example-security`
+    tags `web-server,srg,disa-stig,config,internal`
+
+    control_mapping `DISA-STIG:SRG-APP-000231-WSR-000144,NIST-800-53:SC-28`
+    control_objective `SC-28`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `WebServer:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Web Server SRG guidance for SRG-APP-000231-WSR-000144.`
+
+    component_id `comp-web-server`
+
+    impl_SC_28 `This control is validated by probing the web server configuration or network endpoint against the DISA Web Server SRG baseline.`
+
+META_END
+
+DEF
+    VAR config_path string `/etc/nginx/nginx.conf`
+
+    OBJECT web_config
+        path VAR config_path
+    OBJECT_END
+
+    STATE config_check
+        content string contains `ssl_ciphers`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF config_check
+            OBJECT_REF web_config
+        CTN_END
+    CRI_END
+DEF_END

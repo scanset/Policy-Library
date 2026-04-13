@@ -1,0 +1,52 @@
+# STIG RHEL-09-431015: RHEL 9 must enable the SELinux targeted policy.
+# STIG ID: V-258079 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-431015-selinux-targeted-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-431015: RHEL 9 must enable the SELinux targeted policy.`
+    description `RHEL 9 must enable the SELinux targeted policy.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig`
+
+    control_mapping `DISA-STIG:RHEL-09-431015,NIST-800-53:SI-6`
+    control_objective `SI-6`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-431015.`
+
+    component_id `comp-r9-os`
+
+    impl_SI_6 `This control is validated by checking the content of /etc/selinux/config for the required configuration setting.`
+
+META_END
+
+DEF
+    OBJECT target_file
+        path `/etc/selinux/config`
+    OBJECT_END
+
+    STATE content_check
+        content string contains `SELINUXTYPE=targeted`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF content_check
+            OBJECT_REF target_file
+        CTN_END
+    CRI_END
+DEF_END

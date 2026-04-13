@@ -1,0 +1,43 @@
+# STIG AS24-U1-000960: The Apache web server software must be a vendor-supported version.
+# STIG ID: V-214273 (HIGH)
+
+META
+    esp_id `apache-as24-u1-000960-vendor-supported-version-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `apache`
+    criticality `critical`
+    title `STIG AS24-U1-000960: The Apache web server software must be a vendor-supported version.`
+    description `The Apache web server software must be a vendor-supported version.`
+    author `example-security`
+    tags `apache,stig,disa-stig`
+    control_mapping `DISA-STIG:AS24-U1-000960,NIST-800-53:CM-6`
+    control_objective `CM-6`
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `Apache:localhost:web-hardening`
+    customer_responsibility `configuration`
+    remediation_days `1`
+    recommendation `Review and remediate per DISA Apache STIG guidance for AS24-U1-000960.`
+    component_id `comp-apache-web`
+META_END
+
+DEF
+    OBJECT httpd_pkg
+        package_name `httpd`
+    OBJECT_END
+
+    STATE pkg_installed
+        installed boolean = true
+    STATE_END
+
+    CRI AND
+        CTN rpm_package
+            TEST all all AND
+            STATE_REF pkg_installed
+            OBJECT_REF httpd_pkg
+        CTN_END
+    CRI_END
+DEF_END

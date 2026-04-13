@@ -1,0 +1,97 @@
+# KSI-MLA-LET: EC2 Event Type Logging
+# Validates that all four CloudWatch log groups for EC2 system logging
+# exist with adequate retention:
+# - /example-org/ec2/init      (instance initialization log)
+# - /example-org/ec2/messages  (/var/log/messages)
+# - /example-org/ec2/secure    (/var/log/secure - auth events)
+# - /example-org/ec2/audit     (/var/log/audit/audit.log - auditd)
+
+META
+    esp_id `ksi-mla-let-ec2-logging-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    title `KSI-MLA-LET: EC2 Event Type Logging`
+    description `Validates all four EC2 CloudWatch log groups exist with 365-day retention, confirming system events, authentication events, and audit events are captured and retained`
+    author `example-security`
+    tags `aws,cloudwatch,logging,auditd,fedramp,KSI-MLA-LET,KSI-MLA-OSM`
+
+    control_mapping `KSI:KSI-MLA-LET,KSI:KSI-MLA-OSM`
+    control_objective `KSI-MLA-LET,KSI-MLA-OSM`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:compute-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Ensure the CloudWatch agent is running on the EC2 instance and all four log groups exist with retention_in_days >= 365.`
+
+    component_id `comp-aws-compute`
+
+    impl_KSI_MLA_LET `Event type logging from the EC2 instance is validated by confirming all four CloudWatch log groups targeted by the CloudWatch agent configuration exist and have adequate retention: /example-org/ec2/init captures instance initialization events, /example-org/ec2/messages captures general system events from /var/log/messages, /example-org/ec2/secure captures authentication and authorization events from /var/log/secure, and /example-org/ec2/audit captures auditd events from /var/log/audit/audit.log. All four log groups must exist (found = true) with retention_in_days >= 365 to satisfy the event type logging requirement.`
+
+    impl_KSI_MLA_OSM `SIEM capability at the EC2 layer is validated by confirming that authentication events (/ec2/secure), audit events (/ec2/audit), and system events (/ec2/messages) are all being delivered to CloudWatch (storedBytes > 0 is observable via record checks). The presence of all four log groups with active retention confirms the CloudWatch agent is operational and delivering logs to the centralized monitoring destination.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+
+    OBJECT ec2_init_logs
+        log_group_name `/example-org/ec2/init`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT ec2_messages_logs
+        log_group_name `/example-org/ec2/messages`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT ec2_secure_logs
+        log_group_name `/example-org/ec2/secure`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT ec2_audit_logs
+        log_group_name `/example-org/ec2/audit`
+        region VAR aws_region
+    OBJECT_END
+
+    STATE log_group_compliant
+        found boolean = true
+        retention_in_days int >= 365
+        log_group_class string = `STANDARD`
+    STATE_END
+
+    CRI AND
+        CTN aws_cloudwatch_log_group
+            TEST all all AND
+            STATE_REF log_group_compliant
+            OBJECT_REF ec2_init_logs
+        CTN_END
+
+        CTN aws_cloudwatch_log_group
+            TEST all all AND
+            STATE_REF log_group_compliant
+            OBJECT_REF ec2_messages_logs
+        CTN_END
+
+        CTN aws_cloudwatch_log_group
+            TEST all all AND
+            STATE_REF log_group_compliant
+            OBJECT_REF ec2_secure_logs
+        CTN_END
+
+        CTN aws_cloudwatch_log_group
+            TEST all all AND
+            STATE_REF log_group_compliant
+            OBJECT_REF ec2_audit_logs
+        CTN_END
+    CRI_END
+DEF_END

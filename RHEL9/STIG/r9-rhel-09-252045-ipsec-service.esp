@@ -1,0 +1,52 @@
+# STIG RHEL-09-252045: systemd ipsec.service
+# STIG ID: V-257950 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-252045-ipsec-service-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-252045: RHEL 9 must not have unauthorized IP tunnels configured.`
+    description `RHEL 9 must not have unauthorized IP tunnels configured.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig,service,systemd`
+
+    control_mapping `DISA-STIG:RHEL-09-252045,NIST-800-53:CM-6`
+    control_objective `CM-6`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-252045.`
+
+    component_id `comp-r9-os`
+
+    impl_CM_6 `This control is validated by checking the required system configuration against the DISA STIG baseline for RHEL 9.`
+
+META_END
+
+DEF
+    OBJECT svc_check
+        unit_name `ipsec.service`
+    OBJECT_END
+
+    STATE svc_state
+        found boolean = true
+    STATE_END
+
+    CRI AND
+        CTN systemd_service
+            TEST all all AND
+            STATE_REF svc_state
+            OBJECT_REF svc_check
+        CTN_END
+    CRI_END
+DEF_END

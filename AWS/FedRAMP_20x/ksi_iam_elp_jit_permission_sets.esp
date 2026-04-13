@@ -1,0 +1,171 @@
+# KSI-IAM-ELP / KSI-IAM-JIT / KSI-IAM-AAM: Permission Sets and Identity Store Groups
+# Validates that IAM Identity Center is configured with three permission sets
+# that enforce least privilege and time-bounded sessions, and that the
+# corresponding identity store groups exist and map to Entra ID:
+# - ScanSetAdmin: 4-hour session, AdministratorAccess managed policy
+# - ScanSetDeveloper: 8-hour session, scoped inline policy only
+# - ScanSetReadOnly: 2-hour session, ReadOnlyAccess managed policy
+# - Three identity store groups with Entra federation descriptions
+
+META
+    esp_id `ksi-iam-elp-jit-permission-sets-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `critical`
+
+    title `KSI-IAM-ELP / KSI-IAM-JIT / KSI-IAM-AAM: Permission Sets and Identity Store Groups`
+    description `Validates IAM Identity Center permission sets enforce time-bounded sessions with least-privilege policies, and identity store groups exist for federated Entra ID access`
+    author `example-security`
+    tags `aws,sso,identity-center,permission-set,fedramp,KSI-IAM-ELP,KSI-IAM-JIT,KSI-IAM-AAM`
+
+    control_mapping `KSI:KSI-IAM-ELP,KSI:KSI-IAM-JIT,KSI:KSI-IAM-AAM`
+    control_objective `KSI-IAM-ELP,KSI-IAM-JIT,KSI-IAM-AAM`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:iam-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `3`
+    recommendation `Ensure all three permission sets exist with correct session durations. Admin and ReadOnly use AWS managed policies. Developer uses an inline policy with no managed policies attached.`
+
+    component_id `comp-aws-iam`
+
+    impl_KSI_IAM_ELP `Least privilege is validated by confirming three distinct permission sets exist with access scoped to documented roles. The read-only permission set is granted only ReadOnlyAccess, ensuring auditors and 3PAO assessors cannot modify resources. The developer permission set uses a scoped inline policy granting only EC2 read, SSM session access conditioned on project tags, CloudWatch Logs read, and Secrets Manager describe - no write access to infrastructure. The admin permission set grants AdministratorAccess, appropriate for the system owner role.`
+
+    impl_KSI_IAM_JIT `Just-in-time access is validated by confirming session durations are bounded for each permission set: read-only access is limited to 2-hour sessions, admin access to 4-hour sessions, and developer access to 8-hour sessions. These time limits ensure that federated credentials expire automatically, preventing indefinite access accumulation. Access is provisioned only when users authenticate through Entra ID, with no standing IAM user credentials for human access.`
+
+    impl_KSI_IAM_AAM `Automated account management is validated by confirming that three identity store groups exist that correspond to Entra ID group assignments, and that each group description references the Entra federation mapping. Human access to AWS is managed through group membership in Entra ID rather than directly in AWS IAM, enabling automated provisioning and deprovisioning when users join or leave the Entra groups.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+    VAR instance_arn string `arn:aws:sso:::instance/ssoins-0000000000000000`
+    VAR identity_store_id string `d-906607b0fb`
+
+    # Permission set objects
+    OBJECT admin_ps
+        permission_set_name `ScanSetAdmin`
+        instance_arn VAR instance_arn
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT developer_ps
+        permission_set_name `ScanSetDeveloper`
+        instance_arn VAR instance_arn
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT readonly_ps
+        permission_set_name `ScanSetReadOnly`
+        instance_arn VAR instance_arn
+        region VAR aws_region
+    OBJECT_END
+
+    # Identity store group objects
+    OBJECT admins_group
+        group_name `ScanSetAdmins`
+        identity_store_id VAR identity_store_id
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT developers_group
+        group_name `ScanSetDevelopers`
+        identity_store_id VAR identity_store_id
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT readonly_group
+        group_name `ScanSetReadOnly`
+        identity_store_id VAR identity_store_id
+        region VAR aws_region
+    OBJECT_END
+
+    # Admin: 4-hour session, AdministratorAccess managed policy, no inline
+    STATE admin_ps_compliant
+        found boolean = true
+        session_duration string = `PT4H`
+        managed_policy_count int = 1
+        has_inline_policy boolean = false
+        record
+            field AttachedManagedPolicies.0.Name string = `AdministratorAccess`
+        record_end
+    STATE_END
+
+    # Developer: 8-hour session, scoped inline policy, no managed policies
+    STATE developer_ps_compliant
+        found boolean = true
+        session_duration string = `PT8H`
+        managed_policy_count int = 0
+        has_inline_policy boolean = true
+        record
+            field InlinePolicy.Statement.0.Sid string = `EC2ReadOnly`
+            field InlinePolicy.Statement.1.Sid string = `SSMSessionManager`
+            field InlinePolicy.Statement.2.Sid string = `LogsRead`
+            field InlinePolicy.Statement.3.Sid string = `SecretsReadOnly`
+        record_end
+    STATE_END
+
+    # ReadOnly: 2-hour session, ReadOnlyAccess managed policy, no inline
+    STATE readonly_ps_compliant
+        found boolean = true
+        session_duration string = `PT2H`
+        managed_policy_count int = 1
+        has_inline_policy boolean = false
+        record
+            field AttachedManagedPolicies.0.Name string = `ReadOnlyAccess`
+        record_end
+    STATE_END
+
+    # All identity store groups: exist and reference Entra federation
+    STATE group_exists_with_entra_mapping
+        found boolean = true
+        description string contains `Entra group`
+        identity_store_id string = VAR identity_store_id
+    STATE_END
+
+    CRI AND
+        # Permission sets
+        CTN aws_ssoadmin_permission_set
+            TEST all all AND
+            STATE_REF admin_ps_compliant
+            OBJECT_REF admin_ps
+        CTN_END
+
+        CTN aws_ssoadmin_permission_set
+            TEST all all AND
+            STATE_REF developer_ps_compliant
+            OBJECT_REF developer_ps
+        CTN_END
+
+        CTN aws_ssoadmin_permission_set
+            TEST all all AND
+            STATE_REF readonly_ps_compliant
+            OBJECT_REF readonly_ps
+        CTN_END
+
+        # Identity store groups
+        CTN aws_identitystore_group
+            TEST all all AND
+            STATE_REF group_exists_with_entra_mapping
+            OBJECT_REF admins_group
+        CTN_END
+
+        CTN aws_identitystore_group
+            TEST all all AND
+            STATE_REF group_exists_with_entra_mapping
+            OBJECT_REF developers_group
+        CTN_END
+
+        CTN aws_identitystore_group
+            TEST all all AND
+            STATE_REF group_exists_with_entra_mapping
+            OBJECT_REF readonly_group
+        CTN_END
+    CRI_END
+DEF_END

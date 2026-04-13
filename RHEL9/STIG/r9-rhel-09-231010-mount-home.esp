@@ -1,0 +1,54 @@
+# STIG RHEL-09-231010: /home mount requirements
+# STIG ID: V-257843 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-231010-mount-home-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-231010: A separate RHEL 9 file system must be used for user home directories (such as /h`
+    description `A separate RHEL 9 file system must be used for user home directories (such as /home or an equivalent).`
+    author `example-security`
+    tags `rhel9,stig,disa-stig,mount,filesystem`
+
+    control_mapping `DISA-STIG:RHEL-09-231010,NIST-800-53:CM-6`
+    control_objective `CM-6`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-231010.`
+
+    component_id `comp-r9-os`
+
+    impl_CM_6 `This control is validated by checking the required system configuration against the DISA STIG baseline for RHEL 9.`
+
+META_END
+
+DEF
+    OBJECT mount_check
+        path `/home`
+    OBJECT_END
+
+    STATE mount_hardened
+        found boolean = true
+        nosuid boolean = true
+        nodev boolean = true
+    STATE_END
+
+    CRI AND
+        CTN mount_point
+            TEST all all AND
+            STATE_REF mount_hardened
+            OBJECT_REF mount_check
+        CTN_END
+    CRI_END
+DEF_END

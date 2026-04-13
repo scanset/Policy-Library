@@ -1,0 +1,53 @@
+# STIG RHEL-09-253045: sysctl net.ipv4.conf.default.accept_source_route
+# STIG ID: V-257964 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-253045-net-ipv4-conf-default-accept_source_route-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-253045: RHEL 9 must not forward IPv4 source-routed packets by default.`
+    description `RHEL 9 must not forward IPv4 source-routed packets by default.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig,kernel,sysctl`
+
+    control_mapping `DISA-STIG:RHEL-09-253045,NIST-800-53:CM-6`
+    control_objective `CM-6`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-253045.`
+
+    component_id `comp-r9-os`
+
+    impl_CM_6 `This control is validated by checking the required system configuration against the DISA STIG baseline for RHEL 9.`
+
+META_END
+
+DEF
+    OBJECT param_check
+        parameter `net.ipv4.conf.default.accept_source_route`
+    OBJECT_END
+
+    STATE expected_value
+        found boolean = true
+        value string = `0`
+    STATE_END
+
+    CRI AND
+        CTN sysctl_parameter
+            TEST all all AND
+            STATE_REF expected_value
+            OBJECT_REF param_check
+        CTN_END
+    CRI_END
+DEF_END

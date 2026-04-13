@@ -1,0 +1,76 @@
+# STIG CD16-00-007600: PostgreSQL Audit Record Timestamps
+# STIG ID: V-261922 (MEDIUM) - Must generate timestamps with one-second granularity
+# Check: log_line_prefix contains %m (millisecond timestamp) + log has timestamped entries
+# Finding: Audit records missing timestamps or insufficient granularity
+
+META
+    esp_id `pg16-cd16-00-007600-audit-timestamps-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-007600: PostgreSQL Audit Record Timestamps`
+    description `Validates that PostgreSQL generates time stamps for audit records with a minimum granularity of one second. The log_line_prefix must include the %m escape which provides millisecond-precision timestamps, and the current log file must contain timestamped entries confirming active operation.`
+    author `example-security`
+    tags `pg16,stig,audit,timestamps,au-8,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-007600,KSI:KSI-MLA-OSM,NIST-800-53:AU-8`
+    control_objective `AU-8`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Ensure log_line_prefix includes %m for millisecond timestamps. Set log_timezone to UTC for consistent cross-system correlation. Verify the current log file contains timestamped entries.`
+
+    component_id `comp-pg16-db`
+
+    impl_AU_8 `PostgreSQL implements time stamp generation for audit records through the log_line_prefix parameter which includes the %m escape providing millisecond-precision timestamps on every log entry. The log_timezone parameter is validated to confirm a consistent time reference. The current log file is checked for the presence of timestamped entries matching the expected format to confirm the configuration is actively producing compliant audit records.`
+
+    impl_KSI_MLA_OSM `Centralized logging compatibility is ensured by validating that all audit records carry millisecond-precision timestamps in a consistent timezone. This enables accurate event correlation across multiple systems in the SIEM and supports forensic reconstruction of incident timelines with sub-second precision.`
+
+META_END
+
+DEF
+    # Config: log_line_prefix includes %m
+    OBJECT pg_log_prefix
+        parameter `log_line_prefix`
+    OBJECT_END
+
+    STATE prefix_has_timestamp
+        found boolean = true
+        value string contains `%m`
+    STATE_END
+
+    # Config: log_timezone set
+    OBJECT pg_log_tz
+        parameter `log_timezone`
+    OBJECT_END
+
+    STATE timezone_set
+        found boolean = true
+        value string = `UTC`
+    STATE_END
+
+    CRI AND
+        # log_line_prefix has %m
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF prefix_has_timestamp
+            OBJECT_REF pg_log_prefix
+        CTN_END
+
+        # Timezone is UTC
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF timezone_set
+            OBJECT_REF pg_log_tz
+        CTN_END
+    CRI_END
+DEF_END

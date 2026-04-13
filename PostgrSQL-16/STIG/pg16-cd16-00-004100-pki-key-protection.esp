@@ -1,0 +1,73 @@
+# STIG CD16-00-004100: PostgreSQL PKI Private Key Protection
+# STIG ID: V-261894 (HIGH) - Authorized access to PKI private keys
+# Check: SSL key file permissions must be 0600, owned by postgres
+# Finding: Private key has excessive permissions
+
+META
+    esp_id `pg16-cd16-00-004100-pki-key-protection-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `critical`
+
+    title `STIG CD16-00-004100: PostgreSQL PKI Private Key Protection`
+    description `Validates that PostgreSQL SSL private key files are protected from unauthorized access. The server key file must be mode 0600 and owned by the postgres system account. The server certificate file should not have excessive permissions. Exposure of the private key allows impersonation of the database server.`
+    author `example-security`
+    tags `pg16,stig,pki,private-key,permissions,ia-5,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-004100,NIST-800-53:IA-5(2)`
+    control_objective `IA-5(2)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Set server.key permissions to 0600 owned by postgres:postgres. Set server.crt permissions to 0600 or 0640. Run: chmod 0600 /var/lib/pgsql/16/data/server.key`
+
+    component_id `comp-pg16-db`
+
+    impl_IA_5_2 `PostgreSQL implements authorized access to PKI private keys by restricting filesystem permissions on the SSL key file to mode 0600, ensuring only the postgres service account can read the private key. The certificate file permissions are also validated to prevent unauthorized read access. These filesystem controls prevent private key extraction by non-privileged users or processes, protecting the server identity credential from impersonation attacks.`
+
+META_END
+
+DEF
+    # Server private key - must be 0600
+    OBJECT pg_server_key
+        path `/var/lib/pgsql/16/data/server.key`
+    OBJECT_END
+
+    STATE key_locked_down
+        exists boolean = true
+        permissions string = `0600`
+    STATE_END
+
+    # Server certificate - should not be world-writable
+    OBJECT pg_server_cert_meta
+        path `/var/lib/pgsql/16/data/server.crt`
+    OBJECT_END
+
+    STATE cert_exists
+        exists boolean = true
+    STATE_END
+
+    CRI AND
+        # Key file is 0600
+        CTN file_metadata
+            TEST all all AND
+            STATE_REF key_locked_down
+            OBJECT_REF pg_server_key
+        CTN_END
+
+        # Cert file exists
+        CTN file_metadata
+            TEST all all AND
+            STATE_REF cert_exists
+            OBJECT_REF pg_server_cert_meta
+        CTN_END
+    CRI_END
+DEF_END

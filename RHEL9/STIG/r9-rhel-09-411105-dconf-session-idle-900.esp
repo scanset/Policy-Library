@@ -1,0 +1,54 @@
+# STIG RHEL-09-411105: GNOME session-idle-900
+# STIG ID: V-258060 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-411105-dconf-session-idle-900-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-411105: RHEL 9 must ensure account lockouts persist.`
+    description `RHEL 9 must ensure account lockouts persist.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig,gnome,dconf`
+
+    control_mapping `DISA-STIG:RHEL-09-411105,NIST-800-53:AC-7`
+    control_objective `AC-7`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-411105.`
+
+    component_id `comp-r9-os`
+
+    impl_AC_7 `This control is validated by checking the required system configuration against the DISA STIG baseline for RHEL 9.`
+
+META_END
+
+DEF
+    OBJECT dconf_check
+        schema `org.gnome.desktop.session`
+        key `idle-delay`
+    OBJECT_END
+
+    STATE setting_correct
+        applicable boolean = true
+        value string = `900`
+    STATE_END
+
+    CRI AND
+        CTN dconf_setting
+            TEST all all AND
+            STATE_REF setting_correct
+            OBJECT_REF dconf_check
+        CTN_END
+    CRI_END
+DEF_END

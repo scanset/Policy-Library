@@ -1,0 +1,82 @@
+# STIG CD16-00-011700: PostgreSQL must generate audit records when concurrent logons/connections by the
+# STIG ID: V-261961 (MEDIUM)
+
+META
+    esp_id `pg16-cd16-00-011700-audit-concurrent-logons-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-011700: PostgreSQL must generate audit records when concurrent logons/connections by the`
+    description `PostgreSQL must generate audit records when concurrent logons/connections by the same user from different workstations occur.`
+    author `example-security`
+    tags `pg16,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-011700,NIST-800-53:AU-12`
+    control_objective `AU-12`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and configure the required PostgreSQL parameters to meet compliance requirements.`
+
+    component_id `comp-pg16-db`
+
+    impl_AU_12 `PostgreSQL implements this control by validating the required configuration parameters are set to compliant values. The pg_config_param contract queries each parameter via SHOW and compares against the expected state.`
+
+META_END
+
+DEF
+    OBJECT pg_param_0
+        parameter `log_connections`
+    OBJECT_END
+
+    OBJECT pg_param_1
+        parameter `log_disconnections`
+    OBJECT_END
+
+    OBJECT pg_param_2
+        parameter `log_line_prefix`
+    OBJECT_END
+
+    STATE state_0
+        value string = `on`
+    STATE_END
+
+    STATE state_1
+        value string = `on`
+    STATE_END
+
+    STATE state_2
+        value string contains `%m`
+        value string contains `%u`
+        value string contains `%d`
+    STATE_END
+
+    CRI AND
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF state_0
+            OBJECT_REF pg_param_0
+        CTN_END
+
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF state_1
+            OBJECT_REF pg_param_1
+        CTN_END
+
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF state_2
+            OBJECT_REF pg_param_2
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,0 +1,52 @@
+# STIG RHEL-09-215070: rpm xorg-x11-server-common prohibited
+# STIG ID: V-257837 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-215070-xorg-x11-server-common-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-215070: A graphical display manager must not be installed on RHEL 9 unless approved.`
+    description `A graphical display manager must not be installed on RHEL 9 unless approved.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig,package,rpm`
+
+    control_mapping `DISA-STIG:RHEL-09-215070,NIST-800-53:CM-6`
+    control_objective `CM-6`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-215070.`
+
+    component_id `comp-r9-os`
+
+    impl_CM_6 `This control is validated by checking the required system configuration against the DISA STIG baseline for RHEL 9.`
+
+META_END
+
+DEF
+    OBJECT pkg_check
+        package_name `xorg-x11-server-common`
+    OBJECT_END
+
+    STATE pkg_state
+        installed boolean = false
+    STATE_END
+
+    CRI AND
+        CTN rpm_package
+            TEST all all AND
+            STATE_REF pkg_state
+            OBJECT_REF pkg_check
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,0 +1,52 @@
+# STIG RHEL-09-271110: RHEL 9 must prevent a user from overriding the Ctrl-Alt-Del 
+# STIG ID: V-258032 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-271110-dconf-lock-ctrlaltdel-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-271110: RHEL 9 must prevent a user from overriding the Ctrl-Alt-Del sequence settings fo`
+    description `RHEL 9 must prevent a user from overriding the Ctrl-Alt-Del sequence settings for the graphical user interface.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig`
+
+    control_mapping `DISA-STIG:RHEL-09-271110,NIST-800-53:CM-6`
+    control_objective `CM-6`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-271110.`
+
+    component_id `comp-r9-os`
+
+    impl_CM_6 `This control is validated by checking the required system configuration against the DISA STIG baseline for RHEL 9.`
+
+META_END
+
+DEF
+    OBJECT target_file
+        path `/etc/dconf/db/local.d/locks/`
+    OBJECT_END
+
+    STATE content_check
+        content string contains `logout`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF content_check
+            OBJECT_REF target_file
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,0 +1,52 @@
+# STIG RHEL-09-411040: RHEL 9 must automatically expire temporary accounts within 72 hours.
+# STIG ID: V-258047 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-411040-profile-umask-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-411040: RHEL 9 must automatically expire temporary accounts within 72 hours.`
+    description `RHEL 9 must automatically expire temporary accounts within 72 hours.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig`
+
+    control_mapping `DISA-STIG:RHEL-09-411040,NIST-800-53:AC-2(2)`
+    control_objective `AC-2(2)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-411040.`
+
+    component_id `comp-r9-os`
+
+    impl_AC_2_2 `This control is validated by checking /etc/profile for the required configuration.`
+
+META_END
+
+DEF
+    OBJECT target_file
+        path `/etc/profile`
+    OBJECT_END
+
+    STATE content_check
+        content string contains `umask`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF content_check
+            OBJECT_REF target_file
+        CTN_END
+    CRI_END
+DEF_END

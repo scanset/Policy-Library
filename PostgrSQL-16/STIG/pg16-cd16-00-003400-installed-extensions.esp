@@ -1,0 +1,58 @@
+# STIG CD16-00-003400: PostgreSQL Installed Extensions
+# STIG ID: V-261888 (MEDIUM) - External executables must be restricted
+# Check: SELECT from pg_extension -> only approved extensions installed
+# Finding: Unapproved or unnecessary extension detected
+
+META
+    esp_id `pg16-cd16-00-003400-installed-extensions-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-003400: PostgreSQL Installed Extensions`
+    description `Validates that only approved extensions are installed in the PostgreSQL database. Unnecessary extensions expand the attack surface by introducing additional code paths, external executables, and potential vulnerabilities that are not required for mission-essential functionality.`
+    author `example-security`
+    tags `pg16,stig,extensions,cm-7,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-003400,KSI:KSI-CMT-RMV,KSI:KSI-IAM-JIT,NIST-800-53:CM-7`
+    control_objective `CM-7`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review all installed extensions beyond plpgsql. Remove any extensions not required for mission-essential database functionality using DROP EXTENSION.`
+
+    component_id `comp-pg16-db`
+
+    impl_CM_7 `PostgreSQL implements least functionality by restricting installed extensions to those required for mission-essential operations. The pg_extension catalog is queried to enumerate all non-default extensions beyond plpgsql. Each installed extension introduces additional code paths and potential external executables that expand the database attack surface. Only organizationally approved extensions should be present.`
+
+    impl_KSI_CMT_RMV `Extension management follows the redeployment model by tracking approved extensions as part of the version-controlled database configuration. Changes to the extension set are validated through catalog query rather than direct modification inspection, confirming the deployed state matches the approved baseline.`
+
+    impl_KSI_IAM_JIT `Extension installation requires superuser or CREATE privilege, which is validated separately through role attribute checks. The extension inventory confirms that privilege grants for extension management have not resulted in unauthorized functionality being deployed to the database.`
+
+META_END
+
+DEF
+    OBJECT pg_extensions
+        query `installed_extensions`
+    OBJECT_END
+
+    STATE no_unapproved_extensions
+        row_count int = 0
+    STATE_END
+
+    CRI AND
+        CTN pg_catalog_query
+            TEST all all AND
+            STATE_REF no_unapproved_extensions
+            OBJECT_REF pg_extensions
+        CTN_END
+    CRI_END
+DEF_END

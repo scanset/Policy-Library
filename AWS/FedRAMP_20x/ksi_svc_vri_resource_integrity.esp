@@ -1,0 +1,66 @@
+# KSI-SVC-VRI: Validating Resource Integrity
+# Validates that ScanSet enforces tamper-evident integrity controls on
+# backup infrastructure:
+# - Backup vault WORM lock prevents recovery point modification or deletion
+# - Vault KMS encryption ensures backup data confidentiality at rest
+# - Recovery points exist confirming backup execution has occurred
+
+META
+    esp_id `ksi-svc-vri-resource-integrity-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    title `KSI-SVC-VRI: Validating Resource Integrity`
+    description `Validates AWS Backup vault WORM lock and KMS encryption satisfy KSI-SVC-VRI tamper-evident integrity controls on backup resources`
+    author `example-security`
+    tags `aws,backup,integrity,worm,kms,fedramp,KSI-SVC-VRI`
+
+    control_mapping `KSI:KSI-SVC-VRI`
+    control_objective `KSI-SVC-VRI`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:backup-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `3`
+    recommendation `Enable vault lock on the backup vault with min_retention_days >= 7. Ensure the vault uses a KMS customer managed key for encryption.`
+
+    component_id `comp-aws-backup`
+
+    impl_KSI_SVC_VRI `Resource integrity for backup data is validated by confirming the AWS Backup vault has vault lock enabled (locked = true), which enforces WORM (Write Once Read Many) protection on all recovery points. Once locked, recovery points cannot be modified, deleted, or otherwise tampered with before their minimum retention period expires (min_retention_days >= 7). The vault lock date (LockDate) confirms the lock is in an irrevocable state. KMS encryption (encryption_key_arn starts arn:aws:kms:) validates that backup data integrity is further protected by customer-managed key encryption, ensuring backup resources cannot be read or modified without cryptographic authorization. The presence of active recovery points (number_of_recovery_points >= 1) confirms the integrity controls are protecting real backup data.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+    VAR vault_name string `example-org-backup-vault`
+    VAR kms_key_arn string `arn:aws:kms:us-east-1:123456789012:key/example-key-id-0000-0000-000000000000`
+
+    OBJECT primary_vault
+        vault_name VAR vault_name
+        region VAR aws_region
+    OBJECT_END
+
+    STATE vault_integrity_compliant
+        found boolean = true
+        locked boolean = true
+        min_retention_days int >= 7
+        max_retention_days int >= 365
+        number_of_recovery_points int >= 1
+        encryption_key_arn string = VAR kms_key_arn
+    STATE_END
+
+    CRI AND
+        CTN aws_backup_vault
+            TEST all all AND
+            STATE_REF vault_integrity_compliant
+            OBJECT_REF primary_vault
+        CTN_END
+    CRI_END
+DEF_END

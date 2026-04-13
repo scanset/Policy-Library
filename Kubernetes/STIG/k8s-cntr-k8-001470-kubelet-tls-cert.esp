@@ -1,0 +1,52 @@
+# STIG CNTR-K8-001470: Kubernetes Kubelet must enable tlsCertFile for client authen
+# STIG ID: V-242425 (MEDIUM)
+
+META
+    esp_id `k8s-cntr-k8-001470-kubelet-tls-cert-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `kubernetes`
+    criticality `high`
+
+    title `STIG CNTR-K8-001470: Kubernetes Kubelet must enable tlsCertFile for client authentication to secure s`
+    description `Kubernetes Kubelet must enable tlsCertFile for client authentication to secure service.`
+    author `example-security`
+    tags `kubernetes,stig,disa-stig,kubelet`
+
+    control_mapping `DISA-STIG:CNTR-K8-001470,NIST-800-53:SC-23`
+    control_objective `SC-23`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Kubernetes:cluster:k8s-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CNTR-K8-001470.`
+
+    component_id `comp-k8s-cluster`
+
+    impl_SC_23 `This control is validated by checking the required Kubernetes configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT kubelet_config
+        path `/var/lib/kubelet/config.yaml`
+    OBJECT_END
+
+    STATE config_check
+        content string contains `tlsCertFile`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF config_check
+            OBJECT_REF kubelet_config
+        CTN_END
+    CRI_END
+DEF_END

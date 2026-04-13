@@ -1,0 +1,52 @@
+# STIG AS24-U2-000660: The Apache web server must set an inactive timeout for sessi
+# STIG ID: V-214296 (MEDIUM)
+
+META
+    esp_id `apache-as24-u2-000660-reqtimeout-module-site-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `apache`
+    criticality `high`
+
+    title `STIG AS24-U2-000660: The Apache web server must set an inactive timeout for sessions.`
+    description `The Apache web server must set an inactive timeout for sessions.`
+    author `example-security`
+    tags `apache,stig,disa-stig,module`
+
+    control_mapping `DISA-STIG:AS24-U2-000660,NIST-800-53:SC-5(3)(B)`
+    control_objective `SC-5(3)(B)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Apache:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Apache STIG guidance for AS24-U2-000660.`
+
+    component_id `comp-apache-web`
+
+    impl_SC_5_3_B `This control is validated by checking the Apache HTTP server configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT module_check
+        module `reqtimeout_module`
+    OBJECT_END
+
+    STATE module_state
+        loaded boolean = true
+    STATE_END
+
+    CRI AND
+        CTN apache_module
+            TEST all all AND
+            STATE_REF module_state
+            OBJECT_REF module_check
+        CTN_END
+    CRI_END
+DEF_END

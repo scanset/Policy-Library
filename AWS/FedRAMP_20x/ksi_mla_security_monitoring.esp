@@ -1,0 +1,172 @@
+# KSI-MLA: Security Monitoring and Event Management
+# Validates that ScanSet operates a compliant SIEM capability:
+# - GuardDuty: enabled, required features active, publishing findings to encrypted S3
+# - SecurityHub: enabled, FSBP and NIST 800-53 standards active, cross-region aggregation
+# - Security findings S3 bucket: encrypted, versioned, SSL-enforced, tamper-resistant
+
+META
+    # === Required ===
+    esp_id `ksi-mla-security-monitoring-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `critical`
+
+    # === Documentation ===
+    title `KSI-MLA: Security Monitoring and Event Management`
+    description `Validates GuardDuty threat detection, Security Hub posture management, and the tamper-resistant security findings bucket collectively satisfy KSI-MLA-OSM, KSI-MLA-LET, and KSI-MLA-RVL`
+    author `example-security`
+    tags `aws,guardduty,securityhub,s3,siem,monitoring,fedramp,KSI-MLA-OSM,KSI-MLA-LET,KSI-MLA-RVL`
+
+    # === Control Mapping ===
+    control_mapping `KSI:KSI-MLA-OSM,KSI:KSI-MLA-LET,KSI:KSI-MLA-RVL`
+    control_objective `KSI-MLA-OSM,KSI-MLA-LET,KSI-MLA-RVL`
+
+    # === Assessment ===
+    assessment_method `TEST`
+
+    # === Implementation ===
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    # === Inheritance ===
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:security-infrastructure`
+    customer_responsibility `configuration`
+
+    # === Remediation ===
+    remediation_days `1`
+    recommendation `Enable GuardDuty and Security Hub immediately. Ensure the security findings S3 bucket has KMS encryption, versioning, and a DenyNonSSL bucket policy.`
+
+    # === Component ===
+    component_id `comp-aws-security`
+
+    # === Implementation Narratives ===
+    impl_KSI_MLA_LET `Event type logging is validated by confirming GuardDuty has the following detection features in ENABLED status: CLOUD_TRAIL, DNS_LOGS, FLOW_LOGS, S3_DATA_EVENTS, and EBS_MALWARE_PROTECTION. Security Hub is validated to have AWS Foundational Security Best Practices and NIST SP 800-53 standards in READY status, ensuring continuous evaluation of event-generating control gaps across the account.`
+
+    impl_KSI_MLA_OSM `Audit record content requirements are satisfied by GuardDuty findings, which include resource identity, threat type, severity, timestamp, and affected asset. Finding publishing frequency is validated at FIFTEEN_MINUTES to ensure near-real-time delivery. Security Hub aggregates findings across all regions (ALL_REGIONS linking mode) into a single pane, satisfying centralized logging requirements.`
+
+    impl_KSI_MLA_RVL `Log review is operationalized by validating that GuardDuty is actively publishing findings (status PUBLISHING) to the security findings S3 bucket, and that Security Hub is enabled with cross-region aggregation configured. This confirms the infrastructure for continuous automated log review is operational and delivering to the designated review destination.`
+
+    impl_KSI_MLA_OSM `Tamper-resistant log storage is validated by confirming the security findings S3 bucket has: KMS encryption with bucket keys enabled, versioning enabled (Enabled status), all four public access block settings set to true, and a bucket policy with a DenyNonSSL statement enforcing HTTPS-only transport (ssl_enforced = true). These controls collectively satisfy AU-9 protection of audit information.`
+
+    impl_KSI_MLA_LET `Continuous audit record generation is validated by confirming GuardDuty detector status is ENABLED and the publishing destination status is PUBLISHING. This confirms the system is actively generating and delivering security findings to the designated S3 destination on a FIFTEEN_MINUTES frequency.`
+
+    impl_KSI_MLA_OSM `System monitoring is validated by confirming GuardDuty is enabled with S3_DATA_EVENTS and EBS_MALWARE_PROTECTION features active, providing continuous monitoring for data exfiltration and malware. Security Hub auto_enable_controls is validated as true, ensuring new controls are automatically evaluated as standards are updated.`
+
+    impl_KSI_MLA_OSM `Transmission confidentiality for audit data is validated by confirming the security findings S3 bucket enforces HTTPS-only access via a bucket policy DenyNonSSL statement (ssl_enforced = true) and uses KMS encryption (sse_algorithm = aws:kms) for data at rest. The publishing destination KMS key ARN is validated to confirm findings are encrypted in transit to and at rest in the bucket.`
+
+META_END
+
+DEF
+    # ==========================================================================
+    # Variables
+    # ==========================================================================
+    VAR aws_region string `us-east-1`
+    VAR guardduty_detector_id string `00000000000000000000000000000000`
+    VAR security_bucket_name string `example-org-security-findings`
+    VAR security_bucket_kms_arn string `arn:aws:kms:us-east-1:123456789012:key/example-key-id-0000-0000-000000000000`
+
+    # ==========================================================================
+    # Objects
+    # ==========================================================================
+
+    OBJECT main_detector
+        detector_id VAR guardduty_detector_id
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT security_hub
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT security_findings_bucket
+        bucket_name VAR security_bucket_name
+        region VAR aws_region
+    OBJECT_END
+
+    # ==========================================================================
+    # States
+    # ==========================================================================
+
+    # GuardDuty: enabled with required features, publishing to encrypted destination
+    STATE guardduty_compliant
+        found boolean = true
+        status string = `ENABLED`
+        finding_publishing_frequency string = `FIFTEEN_MINUTES`
+        feature_cloud_trail string = `ENABLED`
+        feature_dns_logs string = `ENABLED`
+        feature_flow_logs string = `ENABLED`
+        feature_s3_data_events string = `ENABLED`
+        feature_ebs_malware_protection string = `ENABLED`
+        has_publishing_destination boolean = true
+        publishing_destination_status string = `PUBLISHING`
+        publishing_destination_type string = `S3`
+    STATE_END
+
+    # GuardDuty destination: delivering to the correct KMS-encrypted bucket
+    STATE guardduty_destination_compliant
+        found boolean = true
+        publishing_destination_arn string = `arn:aws:s3:::example-org-security-findings`
+        publishing_destination_kms_key_arn string starts VAR security_bucket_kms_arn
+    STATE_END
+
+    # Security Hub: enabled, required standards active, cross-region aggregation
+    STATE securityhub_compliant
+        found boolean = true
+        auto_enable_controls boolean = true
+        standard_fsbp_enabled boolean = true
+        standard_nist_800_53_enabled boolean = true
+        standards_count int >= 2
+        has_finding_aggregator boolean = true
+        finding_aggregator_region_linking_mode string = `ALL_REGIONS`
+    STATE_END
+
+    # Security findings bucket: tamper-resistant, encrypted, SSL-enforced
+    STATE security_bucket_compliant
+        found boolean = true
+        versioning_status string = `Enabled`
+        sse_algorithm string = `aws:kms`
+        bucket_key_enabled boolean = true
+        block_public_acls boolean = true
+        ignore_public_acls boolean = true
+        block_public_policy boolean = true
+        restrict_public_buckets boolean = true
+        lifecycle_enabled boolean = true
+        has_bucket_policy boolean = true
+        ssl_enforced boolean = true
+    STATE_END
+
+    # ==========================================================================
+    # Criteria
+    # ==========================================================================
+    CRI AND
+        # GuardDuty detector enabled with required monitoring features
+        CTN aws_guardduty_detector
+            TEST all all AND
+            STATE_REF guardduty_compliant
+            OBJECT_REF main_detector
+        CTN_END
+
+        # GuardDuty publishing to correct encrypted destination
+        CTN aws_guardduty_detector
+            TEST all all AND
+            STATE_REF guardduty_destination_compliant
+            OBJECT_REF main_detector
+        CTN_END
+
+        # Security Hub enabled with FSBP, NIST 800-53, and cross-region aggregation
+        CTN aws_securityhub_account
+            TEST all all AND
+            STATE_REF securityhub_compliant
+            OBJECT_REF security_hub
+        CTN_END
+
+        # Security findings bucket tamper-resistant and encrypted
+        CTN aws_s3_bucket
+            TEST all all AND
+            STATE_REF security_bucket_compliant
+            OBJECT_REF security_findings_bucket
+        CTN_END
+    CRI_END
+DEF_END

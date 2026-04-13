@@ -1,0 +1,115 @@
+# KSI-SCR-MON / KSI-PIY-RVD: Automated Vulnerability and Sensitive Data Monitoring
+# Validates that ScanSet automatically monitors for vulnerabilities and
+# sensitive data exposure using Inspector2 and Macie2:
+# - Inspector2: EC2 and ECR scanning active, network scan active
+# - Macie2: session enabled, classification job scanning the security findings bucket
+
+META
+    # === Required ===
+    esp_id `ksi-scr-piy-automated-monitoring-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    # === Documentation ===
+    title `KSI-SCR-MON / KSI-PIY-RVD: Automated Vulnerability and Sensitive Data Monitoring`
+    description `Validates Inspector2 EC2/ECR vulnerability scanning and Macie2 sensitive data classification satisfy KSI-SCR-MON automated monitoring of third-party software and KSI-PIY-RVD vulnerability disclosure monitoring`
+    author `example-security`
+    tags `aws,inspector2,macie2,vulnerability,scanning,sensitive-data,fedramp,KSI-SCR-MON,KSI-PIY-RVD`
+
+    # === Control Mapping ===
+    control_mapping `KSI:KSI-SCR-MON,KSI:KSI-PIY-RVD`
+    control_objective `KSI-SCR-MON,KSI-PIY-RVD`
+
+    # === Assessment ===
+    assessment_method `TEST`
+
+    # === Implementation ===
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    # === Inheritance ===
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:security-infrastructure`
+    customer_responsibility `configuration`
+
+    # === Remediation ===
+    remediation_days `3`
+    recommendation `Enable Inspector2 for EC2 and ECR resource types. Enable Macie2 and configure a scheduled classification job targeting the security findings bucket.`
+
+    # === Component ===
+    component_id `comp-aws-security`
+
+    # === Implementation Narratives ===
+    impl_KSI_SCR_MON `Supply chain risk monitoring is validated at two levels. First, Inspector2 EC2 package scanning is confirmed active (ec2_scan_active = true) using EC2_HYBRID scan mode, providing continuous automated detection of known vulnerabilities in software packages installed on production instances. Second, Inspector2 ECR scanning is confirmed active (ecr_scan_active = true) with a 14-day rescan duration, ensuring container images used in the supply chain are re-evaluated for newly disclosed vulnerabilities after initial push. Both confirm the automated continuous monitoring required by KSI-SCR-MON.`
+
+    impl_KSI_PIY_RVD `Vulnerability disclosure review is validated by confirming Inspector2 network scanning is active (network_scan_active = true), providing continuous assessment of network reachability vulnerabilities. The ECR rescan duration (DAYS_14) and EC2_HYBRID scan mode confirm the system is configured to detect and surface newly disclosed vulnerabilities within 14 days of disclosure. Macie2 session status (ENABLED) with finding_publishing_frequency (FIFTEEN_MINUTES) validates that sensitive data discoveries - which may indicate vulnerability exploitation - are surfaced and available for review within 15 minutes, satisfying the persistent review requirement of KSI-PIY-RVD.`
+
+META_END
+
+DEF
+    # ==========================================================================
+    # Variables
+    # ==========================================================================
+    VAR aws_region string `us-east-1`
+    VAR security_bucket_name string `example-org-security-findings`
+
+    # ==========================================================================
+    # Objects
+    # ==========================================================================
+
+    OBJECT inspector2
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT macie2
+        region VAR aws_region
+        bucket_name VAR security_bucket_name
+    OBJECT_END
+
+    # ==========================================================================
+    # States
+    # ==========================================================================
+
+    # Inspector2: EC2 and ECR scanning active, network scan active, mode configured
+    STATE inspector2_compliant
+        found boolean = true
+        ec2_scan_active boolean = true
+        ecr_scan_active boolean = true
+        network_scan_active boolean = true
+        ec2_scan_mode string = `EC2_HYBRID`
+        ec2_scan_mode_status string = `SUCCESS`
+        ecr_rescan_duration string = `DAYS_14`
+    STATE_END
+
+    # Macie2: session enabled, scheduled job targeting security bucket with no errors
+    STATE macie2_compliant
+        found boolean = true
+        session_status string = `ENABLED`
+        finding_publishing_frequency string = `FIFTEEN_MINUTES`
+        has_classification_job boolean = true
+        job_type string = `SCHEDULED`
+        last_run_error_code string = `NONE`
+        sampling_percentage int = 100
+    STATE_END
+
+    # ==========================================================================
+    # Criteria
+    # ==========================================================================
+    CRI AND
+        # Inspector2 scanning EC2, ECR, and network resources
+        CTN aws_inspector2_account
+            TEST all all AND
+            STATE_REF inspector2_compliant
+            OBJECT_REF inspector2
+        CTN_END
+
+        # Macie2 classifying the security findings bucket on schedule
+        CTN aws_macie2_account
+            TEST all all AND
+            STATE_REF macie2_compliant
+            OBJECT_REF macie2
+        CTN_END
+    CRI_END
+DEF_END

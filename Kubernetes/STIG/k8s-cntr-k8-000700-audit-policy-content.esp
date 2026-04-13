@@ -1,0 +1,52 @@
+# STIG CNTR-K8-000700: Kubernetes API Server must generate audit records that ident
+# STIG ID: V-242403 (MEDIUM)
+
+META
+    esp_id `k8s-cntr-k8-000700-audit-policy-content-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `kubernetes`
+    criticality `high`
+
+    title `STIG CNTR-K8-000700: Kubernetes API Server must generate audit records that identify what type of eve`
+    description `Kubernetes API Server must generate audit records that identify what type of event has occurred, identify the source of the event, contain the event results, identify any users, and identify any conta`
+    author `example-security`
+    tags `kubernetes,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CNTR-K8-000700,NIST-800-53:AC-16,NIST-800-53:AC-2(4),NIST-800-53:AU-12,NIST-800-53:AU-3,NIST-800-53:AU-3(1)`
+    control_objective `AC-16`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Kubernetes:cluster:k8s-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CNTR-K8-000700.`
+
+    component_id `comp-k8s-cluster`
+
+    impl_AC_16 `This control is validated by checking the required Kubernetes configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT target_file
+        path `/etc/kubernetes/audit-policy.yaml`
+    OBJECT_END
+
+    STATE content_check
+        content string contains `kind: Policy`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF content_check
+            OBJECT_REF target_file
+        CTN_END
+    CRI_END
+DEF_END

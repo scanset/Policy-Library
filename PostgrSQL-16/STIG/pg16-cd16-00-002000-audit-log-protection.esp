@@ -1,0 +1,93 @@
+# STIG CD16-00-002000: PostgreSQL Audit Log Protection
+# STIG ID: V-261875 (MEDIUM) - Audit info must be protected from unauthorized read
+# Check: log_file_mode = 0600, log dir permissions 0700, owned by postgres
+# Finding: Audit log files or directory have excessive permissions
+
+META
+    esp_id `pg16-cd16-00-002000-audit-log-protection-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-002000: PostgreSQL Audit Log Protection`
+    description `Validates that PostgreSQL audit log files and the log directory are protected from unauthorized read access. Log files must be mode 0600, the log directory must be mode 0700, and both must be owned by the postgres system account. Excessive permissions allow unauthorized users to read or tamper with audit evidence.`
+    author `example-security`
+    tags `pg16,stig,audit,log-protection,au-9,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-002000,KSI:KSI-MLA-OSM,NIST-800-53:AU-9`
+    control_objective `AU-9`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Set log_file_mode to 0600 in postgresql.conf. Ensure the log directory (/var/lib/pgsql/16/data/log) is mode 0700 owned by postgres:postgres. Reload PostgreSQL after changes.`
+
+    component_id `comp-pg16-db`
+
+    impl_AU_9 `PostgreSQL implements audit information protection through restrictive file permissions on log files and the log directory. The log_file_mode parameter is validated to confirm new log files are created with mode 0600, restricting read access to the file owner. The log directory permissions are validated at 0700 to prevent directory traversal by non-owner accounts. Ownership is confirmed as the postgres system account to ensure only the database service and authorized administrators can access audit records.`
+
+    impl_KSI_MLA_OSM `Tamper-resistant logging is supported by restricting filesystem access to audit log files. The combination of restrictive file mode (0600), directory mode (0700), and postgres ownership prevents unauthorized access to or modification of audit evidence at the operating system layer, complementing centralized SIEM collection.`
+
+META_END
+
+DEF
+    # Config: log_file_mode must be 0600
+    OBJECT pg_log_file_mode
+        parameter `log_file_mode`
+    OBJECT_END
+
+    STATE log_mode_restricted
+        found boolean = true
+        value string = `0600`
+    STATE_END
+
+    # Log directory permissions
+    OBJECT pg_log_dir
+        path `/var/lib/pgsql/16/data/log`
+    OBJECT_END
+
+    STATE dir_restricted
+        exists boolean = true
+        permissions string = `0700`
+    STATE_END
+
+    # PGDATA directory permissions
+    OBJECT pg_data_dir
+        path `/var/lib/pgsql/16/data`
+    OBJECT_END
+
+    STATE data_dir_restricted
+        exists boolean = true
+        permissions string = `0700`
+    STATE_END
+
+    CRI AND
+        # log_file_mode = 0600
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF log_mode_restricted
+            OBJECT_REF pg_log_file_mode
+        CTN_END
+
+        # Log directory mode 0700
+        CTN file_metadata
+            TEST all all AND
+            STATE_REF dir_restricted
+            OBJECT_REF pg_log_dir
+        CTN_END
+
+        # PGDATA directory mode 0700
+        CTN file_metadata
+            TEST all all AND
+            STATE_REF data_dir_restricted
+            OBJECT_REF pg_data_dir
+        CTN_END
+    CRI_END
+DEF_END

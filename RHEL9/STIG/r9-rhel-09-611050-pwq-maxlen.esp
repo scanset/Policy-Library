@@ -1,0 +1,52 @@
+# STIG RHEL-09-611050: RHEL 9 password-auth must be configured to use a sufficient number of hashing ro
+# STIG ID: V-258099 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-611050-pwq-maxlen-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-611050: RHEL 9 password-auth must be configured to use a sufficient number of hashing ro`
+    description `RHEL 9 password-auth must be configured to use a sufficient number of hashing rounds.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig`
+
+    control_mapping `DISA-STIG:RHEL-09-611050,NIST-800-53:IA-5(1)(D),NIST-800-53:IA-7`
+    control_objective `IA-5(1)(D)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-611050.`
+
+    component_id `comp-r9-os`
+
+    impl_IA_5_1_D `This control is validated by checking the content of /etc/security/pwquality.conf for the required configuration setting.`
+
+META_END
+
+DEF
+    OBJECT target_file
+        path `/etc/security/pwquality.conf`
+    OBJECT_END
+
+    STATE content_check
+        content string contains `maxlen`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF content_check
+            OBJECT_REF target_file
+        CTN_END
+    CRI_END
+DEF_END

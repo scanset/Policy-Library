@@ -1,0 +1,55 @@
+# SRG SRG-APP-000251-WSR-000195: The web server must terminate the connection if server-level
+# STIG ID: V-264365 (MEDIUM)
+# Check: Web server configuration setting
+
+META
+    esp_id `web-srg-srg-app-000251-wsr-000195-exception-handling-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `web-server`
+    criticality `high`
+
+    title `SRG SRG-APP-000251-WSR-000195: The web server must terminate the connection if server-level exceptions are trig`
+    description `The web server must terminate the connection if server-level exceptions are triggered when handling requests to prevent HTTP request smuggling attacks.`
+    author `example-security`
+    tags `web-server,srg,disa-stig,config,internal`
+
+    control_mapping `DISA-STIG:SRG-APP-000251-WSR-000195,NIST-800-53:SI-10`
+    control_objective `SI-10`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `WebServer:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Web Server SRG guidance for SRG-APP-000251-WSR-000195.`
+
+    component_id `comp-web-server`
+
+    impl_SI_10 `This control is validated by probing the web server configuration or network endpoint against the DISA Web Server SRG baseline.`
+
+META_END
+
+DEF
+    VAR config_path string `/etc/nginx/nginx.conf`
+
+    OBJECT web_config
+        path VAR config_path
+    OBJECT_END
+
+    STATE config_check
+        content string contains `error_page`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF config_check
+            OBJECT_REF web_config
+        CTN_END
+    CRI_END
+DEF_END

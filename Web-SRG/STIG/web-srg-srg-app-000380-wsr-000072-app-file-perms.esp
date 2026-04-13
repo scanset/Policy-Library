@@ -1,0 +1,54 @@
+# SRG SRG-APP-000380-WSR-000072: The web server application, libraries, and configuration fil
+# STIG ID: V-206427 (MEDIUM)
+# Check: Web server file permissions
+
+META
+    esp_id `web-srg-srg-app-000380-wsr-000072-app-file-perms-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `web-server`
+    criticality `high`
+
+    title `SRG SRG-APP-000380-WSR-000072: The web server application, libraries, and configuration files must only be acce`
+    description `The web server application, libraries, and configuration files must only be accessible to privileged users.`
+    author `example-security`
+    tags `web-server,srg,disa-stig,permissions,internal`
+
+    control_mapping `DISA-STIG:SRG-APP-000380-WSR-000072,NIST-800-53:CM-5(1)(A)`
+    control_objective `CM-5(1)(A)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `WebServer:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Web Server SRG guidance for SRG-APP-000380-WSR-000072.`
+
+    component_id `comp-web-server`
+
+    impl_CM_5_1_A `This control is validated by probing the web server configuration or network endpoint against the DISA Web Server SRG baseline.`
+
+META_END
+
+DEF
+    OBJECT target
+        path `/etc/nginx`
+    OBJECT_END
+
+    STATE perms_check
+        exists boolean = true
+        permissions string = `0644`
+    STATE_END
+
+    CRI AND
+        CTN file_metadata
+            TEST all all AND
+            STATE_REF perms_check
+            OBJECT_REF target
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,0 +1,90 @@
+# STIG CD16-00-008400: PostgreSQL DOD-Approved Certificates
+# STIG ID: V-261929 (MEDIUM) - Must only accept DOD PKI or DOD-approved certificates
+# Check: ssl_ca_file and ssl_cert_file configured + cert is not self-signed
+# Finding: Self-signed certificate or no CA file configured
+
+META
+    esp_id `pg16-cd16-00-008400-approved-certificates-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-008400: PostgreSQL DOD-Approved Certificates`
+    description `Validates that PostgreSQL is configured to use certificates from an approved certificate authority. The ssl_ca_file must be set to a CA bundle, ssl_cert_file must reference a valid certificate, and the server certificate should not be self-signed. Self-signed certificates bypass the PKI trust chain and cannot be validated against an organizational CA.`
+    author `example-security`
+    tags `pg16,stig,pki,ca,certificate,sc-23,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-008400,NIST-800-53:SC-23(5)`
+    control_objective `SC-23(5)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Obtain a certificate signed by an approved CA. Set ssl_ca_file to the CA bundle path, ssl_cert_file to the signed server certificate, and ssl_key_file to the private key. Replace self-signed certificates with CA-signed ones.`
+
+    component_id `comp-pg16-db`
+
+    impl_SC_23_5 `PostgreSQL implements certificate authority restrictions by validating that the ssl_ca_file parameter references an organizational CA bundle and that the server certificate is not self-signed. A configured ssl_ca_file enables the database to verify client certificates against the trusted CA chain. The openssl_cert inspection confirms whether the server certificate subject and issuer differ, indicating a CA-signed certificate rather than a self-signed one that would bypass trust chain validation.`
+
+META_END
+
+DEF
+    # ssl_cert_file must be set
+    OBJECT pg_cert_file
+        parameter `ssl_cert_file`
+    OBJECT_END
+
+    STATE cert_configured
+        found boolean = true
+        value string != ``
+    STATE_END
+
+    # ssl_ca_file should be set for CA validation
+    OBJECT pg_ca_file
+        parameter `ssl_ca_file`
+    OBJECT_END
+
+    STATE ca_configured
+        found boolean = true
+    STATE_END
+
+    # Inspect the server cert - should not be self-signed
+    OBJECT pg_cert_inspect
+        path `/var/lib/pgsql/16/data/server.crt`
+    OBJECT_END
+
+    STATE not_self_signed
+        found boolean = true
+        self_signed boolean = false
+    STATE_END
+
+    CRI AND
+        # ssl_cert_file is set
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF cert_configured
+            OBJECT_REF pg_cert_file
+        CTN_END
+
+        # ssl_ca_file is set
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF ca_configured
+            OBJECT_REF pg_ca_file
+        CTN_END
+
+        # Certificate is not self-signed
+        CTN openssl_cert
+            TEST all all AND
+            STATE_REF not_self_signed
+            OBJECT_REF pg_cert_inspect
+        CTN_END
+    CRI_END
+DEF_END

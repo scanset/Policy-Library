@@ -1,0 +1,52 @@
+# STIG RHEL-09-252020: RHEL 9 must securely compare internal information system clocks at least every 2
+# STIG ID: V-257945 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-252020-chrony-server-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-252020: RHEL 9 must securely compare internal information system clocks at least every 2`
+    description `RHEL 9 must securely compare internal information system clocks at least every 24 hours.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig`
+
+    control_mapping `DISA-STIG:RHEL-09-252020,NIST-800-53:AU-8,NIST-800-53:SC-45(1)(A),NIST-800-53:SC-45(1)(B)`
+    control_objective `AU-8`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-252020.`
+
+    component_id `comp-r9-os`
+
+    impl_AU_8 `This control is validated by checking /etc/chrony.conf for the required configuration.`
+
+META_END
+
+DEF
+    OBJECT target_file
+        path `/etc/chrony.conf`
+    OBJECT_END
+
+    STATE content_check
+        content string contains `server`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF content_check
+            OBJECT_REF target_file
+        CTN_END
+    CRI_END
+DEF_END

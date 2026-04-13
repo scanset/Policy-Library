@@ -1,0 +1,53 @@
+# STIG RHEL-09-232255: no-ungrouped-files
+# STIG ID: V-257931 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-232255-no-ungrouped-files-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-232255: All RHEL 9 local files and directories must have a valid owner.`
+    description `All RHEL 9 local files and directories must have a valid owner.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig,filesystem`
+
+    control_mapping `DISA-STIG:RHEL-09-232255,NIST-800-53:CM-6`
+    control_objective `CM-6`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-232255.`
+
+    component_id `comp-r9-os`
+
+    impl_CM_6 `This control is validated by checking the required system configuration against the DISA STIG baseline for RHEL 9.`
+
+META_END
+
+DEF
+    OBJECT fs_scan
+        scan_type `nogroup`
+    OBJECT_END
+
+    STATE scan_clean
+        found boolean = true
+        match_count int = 0
+    STATE_END
+
+    CRI AND
+        CTN filesystem_scan
+            TEST all all AND
+            STATE_REF scan_clean
+            OBJECT_REF fs_scan
+        CTN_END
+    CRI_END
+DEF_END

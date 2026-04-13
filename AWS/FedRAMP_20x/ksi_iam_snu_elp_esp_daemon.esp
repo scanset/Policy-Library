@@ -1,0 +1,103 @@
+# KSI-IAM-SNU / KSI-IAM-ELP / KSI-SVC-ASM: ESP Daemon Service Identity
+# Validates that the ESP daemon's AWS service identity is correctly scoped:
+# - IAM user exists in /esp/ path with inline policy only
+# - AWS credentials stored in Secrets Manager (KMS encrypted, current version)
+# - Azure SPN credentials stored in Secrets Manager (KMS encrypted, current version)
+
+META
+    esp_id `ksi-iam-snu-elp-esp-daemon-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    title `KSI-IAM-SNU / KSI-IAM-ELP / KSI-SVC-ASM: ESP Daemon Service Identity`
+    description `Validates the ESP daemon IAM user is path-scoped with inline policy only, and both AWS and Azure credential sets are stored in Secrets Manager with KMS encryption`
+    author `example-security`
+    tags `aws,iam,secretsmanager,esp-daemon,fedramp,KSI-IAM-SNU,KSI-IAM-ELP,KSI-SVC-ASM`
+
+    control_mapping `KSI:KSI-IAM-SNU,KSI:KSI-IAM-ELP,KSI:KSI-SVC-ASM`
+    control_objective `KSI-IAM-SNU,KSI-IAM-ELP,KSI-SVC-ASM`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:iam-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Ensure the ESP daemon IAM user exists in /esp/ path with no managed policy attachments and exactly one inline policy. Ensure both credential secrets are KMS encrypted with active current versions.`
+
+    component_id `comp-aws-iam`
+
+    impl_KSI_IAM_SNU `Non-user authentication for the ESP daemon dev container identity is validated by confirming the IAM user exists in the /esp/ organizational path, confirming intentional scoping separate from human user accounts. The IAM user has no managed policy attachments (attached_policy_count = 0), with permissions granted exclusively via a single inline policy that limits the identity to read-only infrastructure scanning operations. On EC2, the instance role is used instead of this user - this user exists only for dev container testing contexts.`
+
+    impl_KSI_IAM_ELP `Least privilege for the ESP daemon identity is validated by confirming a single inline policy (inline_policy_count = 1) is attached with no managed policies. The inline policy grants only the read-only describe operations required for infrastructure scanning across the defined service boundaries. No write permissions are granted to any service.`
+
+    impl_KSI_SVC_ASM `Automated secret management for the daemon credentials is validated by confirming both the AWS access key credentials and the Azure service principal credentials are stored in Secrets Manager with customer-managed KMS encryption and active current versions. Credentials are retrieved programmatically at runtime rather than embedded in configuration files or environment variables, and are rotated via Secrets Manager lifecycle management.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+    VAR kms_key_arn string `arn:aws:kms:us-east-1:123456789012:key/example-key-id-0000-0000-000000000000`
+
+    OBJECT esp_daemon_user
+        user_name `example-org-esp-aws-daemon`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT aws_credentials_secret
+        secret_id `example-org/esp/aws-daemon`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT azure_credentials_secret
+        secret_id `example-org/azure/esp-daemon`
+        region VAR aws_region
+    OBJECT_END
+
+    # ESP daemon user: /esp/ path, inline only, no managed policies
+    STATE esp_user_compliant
+        found boolean = true
+        path string = `/esp/`
+        attached_policy_count int = 0
+        inline_policy_count int = 1
+        record
+            field InlinePolicyNames.0 string = `example-org-esp-aws-daemon-policy`
+            field Tags.*.Key string = `ManagedBy` at_least_one
+        record_end
+    STATE_END
+
+    # Both credential secrets: KMS encrypted, active current version
+    STATE credential_secret_compliant
+        found boolean = true
+        kms_key_id string = VAR kms_key_arn
+        has_current_version boolean = true
+    STATE_END
+
+    CRI AND
+        # ESP daemon IAM user
+        CTN aws_iam_user
+            TEST all all AND
+            STATE_REF esp_user_compliant
+            OBJECT_REF esp_daemon_user
+        CTN_END
+
+        # AWS credentials in Secrets Manager
+        CTN aws_secretsmanager_secret
+            TEST all all AND
+            STATE_REF credential_secret_compliant
+            OBJECT_REF aws_credentials_secret
+        CTN_END
+
+        # Azure SPN credentials in Secrets Manager
+        CTN aws_secretsmanager_secret
+            TEST all all AND
+            STATE_REF credential_secret_compliant
+            OBJECT_REF azure_credentials_secret
+        CTN_END
+    CRI_END
+DEF_END

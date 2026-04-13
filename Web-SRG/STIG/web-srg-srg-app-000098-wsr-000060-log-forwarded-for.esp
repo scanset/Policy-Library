@@ -1,0 +1,55 @@
+# SRG SRG-APP-000098-WSR-000060: A web server, behind a load balancer or proxy server, must p
+# STIG ID: V-206363 (MEDIUM)
+# Check: Web server logging configuration
+
+META
+    esp_id `web-srg-srg-app-000098-wsr-000060-log-forwarded-for-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `web-server`
+    criticality `high`
+
+    title `SRG SRG-APP-000098-WSR-000060: A web server, behind a load balancer or proxy server, must produce log records c`
+    description `A web server, behind a load balancer or proxy server, must produce log records containing the client IP information as the source and destination and not the load balancer or proxy IP information with`
+    author `example-security`
+    tags `web-server,srg,disa-stig,logging,internal`
+
+    control_mapping `DISA-STIG:SRG-APP-000098-WSR-000060,NIST-800-53:AU-3`
+    control_objective `AU-3`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `WebServer:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Web Server SRG guidance for SRG-APP-000098-WSR-000060.`
+
+    component_id `comp-web-server`
+
+    impl_AU_3 `This control is validated by probing the web server configuration or network endpoint against the DISA Web Server SRG baseline.`
+
+META_END
+
+DEF
+    VAR config_path string `/etc/nginx/nginx.conf`
+
+    OBJECT web_config
+        path VAR config_path
+    OBJECT_END
+
+    STATE log_check
+        content string contains `X-Forwarded-For`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF log_check
+            OBJECT_REF web_config
+        CTN_END
+    CRI_END
+DEF_END

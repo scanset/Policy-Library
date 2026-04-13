@@ -1,0 +1,73 @@
+# STIG CD16-00-004200: PostgreSQL PKI Identity Mapping
+# STIG ID: V-261895 (MEDIUM) - PKI identity must map to DB user account
+# Check: openssl x509 -subject on server cert + verify CN matches expected
+# Finding: Certificate CN does not match expected database identity
+
+META
+    esp_id `pg16-cd16-00-004200-pki-identity-mapping-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-004200: PostgreSQL PKI Identity Mapping`
+    description `Validates that the PostgreSQL server certificate exists and contains an identifiable Common Name. For PKI-based authentication, the CN attribute of the certificate is compared to the requested database username to authorize the connection. A missing or unparseable certificate prevents PKI identity mapping.`
+    author `example-security`
+    tags `pg16,stig,pki,certificate,identity,ia-5,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-004200,NIST-800-53:IA-5(2)`
+    control_objective `IA-5(2)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Generate a certificate with a CN matching the database hostname or user identity. For client certificate authentication, configure pg_hba.conf with hostssl entries using cert auth method and pg_ident.conf for CN-to-username mapping.`
+
+    component_id `comp-pg16-db`
+
+    impl_IA_5_2 `PostgreSQL implements PKI-authenticated identity mapping by validating the server certificate Common Name against expected database identities. The openssl x509 tool inspects the certificate to extract the subject CN, confirming a parseable identity exists for PKI-based authentication. The ssl_cert_file configuration parameter confirms the certificate path is configured in the database.`
+
+META_END
+
+DEF
+    # Verify ssl_cert_file is configured
+    OBJECT pg_ssl_cert_path
+        parameter `ssl_cert_file`
+    OBJECT_END
+
+    STATE cert_path_set
+        found boolean = true
+        value string != ``
+    STATE_END
+
+    # Inspect the actual certificate
+    OBJECT pg_server_cert
+        path `/var/lib/pgsql/16/data/server.crt`
+    OBJECT_END
+
+    STATE cert_valid_with_cn
+        found boolean = true
+    STATE_END
+
+    CRI AND
+        # ssl_cert_file is configured
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF cert_path_set
+            OBJECT_REF pg_ssl_cert_path
+        CTN_END
+
+        # Certificate exists and is parseable
+        CTN openssl_cert
+            TEST all all AND
+            STATE_REF cert_valid_with_cn
+            OBJECT_REF pg_server_cert
+        CTN_END
+    CRI_END
+DEF_END

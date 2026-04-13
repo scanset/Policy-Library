@@ -1,0 +1,55 @@
+# SRG SRG-APP-000357-WSR-000150: The web server must use a logging mechanism that is configur
+# STIG ID: V-206421 (MEDIUM)
+# Check: Web server logging configuration
+
+META
+    esp_id `web-srg-srg-app-000357-wsr-000150-log-storage-capacity-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `web-server`
+    criticality `high`
+
+    title `SRG SRG-APP-000357-WSR-000150: The web server must use a logging mechanism that is configured to allocate log r`
+    description `The web server must use a logging mechanism that is configured to allocate log record storage capacity large enough to accommodate the logging requirements of the web server.`
+    author `example-security`
+    tags `web-server,srg,disa-stig,logging,internal`
+
+    control_mapping `DISA-STIG:SRG-APP-000357-WSR-000150,NIST-800-53:AU-4`
+    control_objective `AU-4`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `WebServer:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Web Server SRG guidance for SRG-APP-000357-WSR-000150.`
+
+    component_id `comp-web-server`
+
+    impl_AU_4 `This control is validated by probing the web server configuration or network endpoint against the DISA Web Server SRG baseline.`
+
+META_END
+
+DEF
+    VAR config_path string `/etc/nginx/nginx.conf`
+
+    OBJECT web_config
+        path VAR config_path
+    OBJECT_END
+
+    STATE log_check
+        content string contains `log`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF log_check
+            OBJECT_REF web_config
+        CTN_END
+    CRI_END
+DEF_END

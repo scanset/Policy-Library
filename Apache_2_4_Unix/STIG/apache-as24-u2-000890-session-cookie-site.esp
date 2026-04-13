@@ -1,0 +1,68 @@
+# STIG AS24-U2-000890: Cookies exchanged between the Apache web server and the clie
+# STIG ID: V-214303 (MEDIUM)
+
+META
+    esp_id `apache-as24-u2-000890-session-cookie-site-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `apache`
+    criticality `high`
+
+    title `STIG AS24-U2-000890: Cookies exchanged between the Apache web server and the client, such as session `
+    description `Cookies exchanged between the Apache web server and the client, such as session cookies, must have cookie properties set to force the encryption of cookies.`
+    author `example-security`
+    tags `apache,stig,disa-stig,combined`
+
+    control_mapping `DISA-STIG:AS24-U2-000890,NIST-800-53:SC-12(3)`
+    control_objective `SC-12(3)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Apache:localhost:web-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA Apache STIG guidance for AS24-U2-000890.`
+
+    component_id `comp-apache-web`
+
+    impl_SC_12_3 `This control is validated by checking the Apache HTTP server configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    VAR config_path string `/etc/httpd/conf/httpd.conf`
+
+    OBJECT module_check
+        module `session_cookie_module`
+    OBJECT_END
+
+    STATE module_loaded
+        loaded boolean = true
+    STATE_END
+
+    OBJECT httpd_config
+        path VAR config_path
+    OBJECT_END
+
+    STATE directive_present
+        content string contains `SessionCookieName`
+    STATE_END
+
+    CRI AND
+        CTN apache_module
+            TEST all all AND
+            STATE_REF module_loaded
+            OBJECT_REF module_check
+        CTN_END
+
+        CTN file_content
+            TEST all all AND
+            STATE_REF directive_present
+            OBJECT_REF httpd_config
+        CTN_END
+    CRI_END
+DEF_END

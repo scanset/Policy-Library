@@ -1,0 +1,54 @@
+# STIG RHEL-09-411050: GNOME media-automount
+# STIG ID: V-258049 (MEDIUM)
+
+META
+    esp_id `r9-rhel-09-411050-dconf-media-automount-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `rocky9`
+    criticality `high`
+
+    title `STIG RHEL-09-411050: RHEL 9 must disable account identifiers (individuals, groups, roles, and devices`
+    description `RHEL 9 must disable account identifiers (individuals, groups, roles, and devices) after 35 days of inactivity.`
+    author `example-security`
+    tags `rhel9,stig,disa-stig,gnome,dconf`
+
+    control_mapping `DISA-STIG:RHEL-09-411050,NIST-800-53:AC-2(3)(A),NIST-800-53:AC-2(3)(B)`
+    control_objective `AC-2(3)(A)`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Rocky9:localhost:os-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for RHEL-09-411050.`
+
+    component_id `comp-r9-os`
+
+    impl_AC_2_3_A `This control is validated by checking the required system configuration against the DISA STIG baseline for RHEL 9.`
+
+META_END
+
+DEF
+    OBJECT dconf_check
+        schema `org.gnome.desktop.media-handling`
+        key `automount`
+    OBJECT_END
+
+    STATE setting_correct
+        applicable boolean = true
+        value string = `false`
+    STATE_END
+
+    CRI AND
+        CTN dconf_setting
+            TEST all all AND
+            STATE_REF setting_correct
+            OBJECT_REF dconf_check
+        CTN_END
+    CRI_END
+DEF_END

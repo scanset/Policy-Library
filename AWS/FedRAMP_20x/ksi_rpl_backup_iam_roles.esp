@@ -1,0 +1,100 @@
+# KSI-RPL: Backup Service Role Trust and Policy Validation
+# Validates that the two IAM roles supporting backup infrastructure are
+# correctly configured:
+# - example-org-backup-role: trusts backup.amazonaws.com, has backup + restore policies
+# - example-org-backup-prep-role: trusts ssm.amazonaws.com, has maintenance window role
+
+META
+    esp_id `ksi-rpl-backup-iam-roles-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    title `KSI-RPL: Backup Service Role Trust and Policy Validation`
+    description `Validates the AWS Backup service role and SSM maintenance window role have correct trust policies and required policy attachments for KSI-RPL-ABO, KSI-RPL-ARP, KSI-RPL-TRC, and KSI-RPL-RRO`
+    author `example-security`
+    tags `aws,iam,backup,ssm,fedramp,KSI-RPL-ABO,KSI-RPL-ARP,KSI-RPL-TRC,KSI-RPL-RRO`
+
+    control_mapping `KSI:KSI-RPL-ABO,KSI:KSI-RPL-ARP,KSI:KSI-RPL-TRC,KSI:KSI-RPL-RRO`
+    control_objective `KSI-RPL-ABO,KSI-RPL-ARP,KSI-RPL-TRC,KSI-RPL-RRO`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:backup-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `3`
+    recommendation `Ensure backup-role trusts backup.amazonaws.com and has both AWSBackupServiceRolePolicyForBackup and AWSBackupServiceRolePolicyForRestores attached. Ensure backup-prep-role trusts ssm.amazonaws.com and has AmazonSSMMaintenanceWindowRole attached.`
+
+    component_id `comp-aws-backup`
+
+    impl_KSI_RPL_ABO `Backup execution authorization is validated by confirming the backup service role (example-org-backup-role) trusts backup.amazonaws.com (AssumeRolePolicyDocument.Statement.0.Principal.Service = backup.amazonaws.com) and has both AWSBackupServiceRolePolicyForBackup and AWSBackupServiceRolePolicyForRestores attached (attached_policy_count = 2). This confirms the AWS Backup service is authorized to create recovery points and that restore operations are authorized, satisfying the requirement for aligned backup and restore capabilities.`
+
+    impl_KSI_RPL_ARP `Recovery plan alignment requires that restore operations are explicitly authorized. This is validated by confirming the backup role has AWSBackupServiceRolePolicyForRestores attached, which grants the permissions required to execute recovery operations. Without this policy, recovery points exist but restores cannot be performed, breaking the recovery plan alignment.`
+
+    impl_KSI_RPL_TRC `Recovery capability testing requires both backup creation and restore authorization to be present simultaneously. This is validated by confirming the backup role has exactly two attached policies - one for backup and one for restores - with no inline policies (inline_policy_count = 0), ensuring no unauthorized policy customizations have been introduced that could impair or expand restore capabilities during testing.`
+
+    impl_KSI_RPL_RRO `Pre-backup database dump authorization is validated by confirming the backup-prep role (example-org-backup-prep-role) trusts ssm.amazonaws.com and has AmazonSSMMaintenanceWindowRole attached (attached_policy_count = 1). This role authorizes the SSM maintenance window task to execute the PostgreSQL dump command on the EC2 instance before the backup window, ensuring database-consistent recovery points that meet the documented recovery objectives.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+
+    OBJECT backup_role
+        role_name `example-org-backup-role`
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT backup_prep_role
+        role_name `example-org-backup-prep-role`
+        region VAR aws_region
+    OBJECT_END
+
+    # Backup role: trusts AWS Backup service, has backup + restore policies
+    STATE backup_role_compliant
+        found boolean = true
+        attached_policy_count int = 2
+        inline_policy_count int = 0
+        record
+            field AssumeRolePolicyDocument.Statement.0.Principal.Service string = `backup.amazonaws.com`
+            field AssumeRolePolicyDocument.Statement.0.Effect string = `Allow`
+            field AssumeRolePolicyDocument.Statement.0.Action string = `sts:AssumeRole`
+            field AttachedPolicies.*.PolicyName string = `AWSBackupServiceRolePolicyForBackup` at_least_one
+            field AttachedPolicies.*.PolicyName string = `AWSBackupServiceRolePolicyForRestores` at_least_one
+        record_end
+    STATE_END
+
+    # Backup prep role: trusts SSM, has maintenance window role
+    STATE backup_prep_role_compliant
+        found boolean = true
+        attached_policy_count int = 1
+        inline_policy_count int = 0
+        record
+            field AssumeRolePolicyDocument.Statement.0.Principal.Service string = `ssm.amazonaws.com`
+            field AssumeRolePolicyDocument.Statement.0.Effect string = `Allow`
+            field AssumeRolePolicyDocument.Statement.0.Action string = `sts:AssumeRole`
+            field AttachedPolicies.*.PolicyName string = `AmazonSSMMaintenanceWindowRole` at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        # AWS Backup service role authorized for backup and restore
+        CTN aws_iam_role
+            TEST all all AND
+            STATE_REF backup_role_compliant
+            OBJECT_REF backup_role
+        CTN_END
+
+        # SSM maintenance window role authorized for pre-backup dump
+        CTN aws_iam_role
+            TEST all all AND
+            STATE_REF backup_prep_role_compliant
+            OBJECT_REF backup_prep_role
+        CTN_END
+    CRI_END
+DEF_END

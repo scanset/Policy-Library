@@ -1,0 +1,52 @@
+# STIG CNTR-K8-000380: The Kubernetes kubelet must enable explicit authorization.
+# STIG ID: V-242392 (HIGH)
+
+META
+    esp_id `k8s-cntr-k8-000380-kubelet-authz-webhook-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `kubernetes`
+    criticality `critical`
+
+    title `STIG CNTR-K8-000380: The Kubernetes kubelet must enable explicit authorization.`
+    description `The Kubernetes kubelet must enable explicit authorization.`
+    author `example-security`
+    tags `kubernetes,stig,disa-stig,kubelet`
+
+    control_mapping `DISA-STIG:CNTR-K8-000380,NIST-800-53:AC-3`
+    control_objective `AC-3`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Kubernetes:cluster:k8s-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Review and remediate per DISA STIG guidance for CNTR-K8-000380.`
+
+    component_id `comp-k8s-cluster`
+
+    impl_AC_3 `This control is validated by checking the required Kubernetes configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT kubelet_config
+        path `/var/lib/kubelet/config.yaml`
+    OBJECT_END
+
+    STATE config_check
+        content string contains `Webhook`
+    STATE_END
+
+    CRI AND
+        CTN file_content
+            TEST all all AND
+            STATE_REF config_check
+            OBJECT_REF kubelet_config
+        CTN_END
+    CRI_END
+DEF_END

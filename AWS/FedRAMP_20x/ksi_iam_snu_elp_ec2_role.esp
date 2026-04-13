@@ -1,0 +1,78 @@
+# KSI-IAM-SNU / KSI-IAM-ELP / KSI-CNA-DFP: EC2 Instance Role
+# Validates the ScanSet EC2 instance role is correctly configured
+# as a service identity with no static credentials:
+# - Trusts ec2.amazonaws.com only
+# - 3 managed policies: SSM, CloudWatch Agent, Inspector2 CIS
+# - 2 inline policies: scoped operational + ESP scan permissions
+# - Max session duration <= 3600 seconds
+
+META
+    esp_id `ksi-iam-snu-elp-ec2-role-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `critical`
+
+    title `KSI-IAM-SNU / KSI-IAM-ELP / KSI-CNA-DFP: EC2 Instance Role`
+    description `Validates the EC2 instance role is scoped to ec2.amazonaws.com with documented managed and inline policies, no static credentials, and bounded session duration`
+    author `example-security`
+    tags `aws,iam,ec2,instance-role,fedramp,KSI-IAM-SNU,KSI-IAM-ELP,KSI-CNA-DFP`
+
+    control_mapping `KSI:KSI-IAM-SNU,KSI:KSI-IAM-ELP,KSI:KSI-CNA-DFP`
+    control_objective `KSI-IAM-SNU,KSI-IAM-ELP,KSI-CNA-DFP`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:iam-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Ensure the EC2 instance role trusts only ec2.amazonaws.com. Verify 3 managed policies and 2 inline policies are attached. No static access keys should be used on EC2.`
+
+    component_id `comp-aws-iam`
+
+    impl_KSI_IAM_SNU `Non-user authentication for the EC2 instance is validated by confirming the instance role trusts only ec2.amazonaws.com as its principal, ensuring only the EC2 service can assume the role via the instance metadata service. No static access keys are associated with this role - credentials are provided dynamically through IMDSv2 (validated separately in the instance hardening policy). The role is the exclusive authentication mechanism for all AWS API calls made by the ScanSet server process.`
+
+    impl_KSI_IAM_ELP `Least privilege for the instance role is validated by confirming the documented set of managed and inline policies are attached. Three managed policies provide SSM session manager access for maintenance, CloudWatch agent permissions for log delivery, and Inspector2 CIS scanning baseline. Two inline policies scope the operational permissions to specific secret ARN prefixes and KMS key operations via service condition, and grant the ESP scan daemon read-only access across the infrastructure APIs it monitors.`
+
+    impl_KSI_CNA_DFP `Functionality and privilege definition for the instance role is validated by confirming the policy attachment count matches the documented baseline. The inline policy count confirms no undocumented inline policies have been added outside of Terraform. The max session duration confirms temporary credentials issued through the instance metadata service are bounded, limiting the window of exposure if credentials are compromised.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+
+    OBJECT ec2_role
+        role_name `example-org-ec2-role`
+        region VAR aws_region
+    OBJECT_END
+
+    # EC2 role: trusts ec2.amazonaws.com, 3 managed + 2 inline, bounded session
+    STATE ec2_role_compliant
+        found boolean = true
+        attached_policy_count int = 3
+        inline_policy_count int = 2
+        max_session_duration int <= 3600
+        record
+            field AssumeRolePolicyDocument.Statement.0.Principal.Service string = `ec2.amazonaws.com`
+            field AssumeRolePolicyDocument.Statement.0.Effect string = `Allow`
+            field AssumeRolePolicyDocument.Statement.0.Action string = `sts:AssumeRole`
+            field AttachedPolicies.*.PolicyName string = `AmazonSSMManagedInstanceCore` at_least_one
+            field AttachedPolicies.*.PolicyName string = `CloudWatchAgentServerPolicy` at_least_one
+            field AttachedPolicies.*.PolicyName string = `AmazonInspector2ManagedCisPolicy` at_least_one
+            field InlinePolicyNames.* string = `example-org-ec2-scoped` at_least_one
+            field InlinePolicyNames.* string = `example-org-ec2-esp-scan` at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN aws_iam_role
+            TEST all all AND
+            STATE_REF ec2_role_compliant
+            OBJECT_REF ec2_role
+        CTN_END
+    CRI_END
+DEF_END

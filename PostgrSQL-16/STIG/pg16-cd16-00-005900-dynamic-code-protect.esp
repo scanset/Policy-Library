@@ -1,0 +1,53 @@
+# STIG CD16-00-005900: PostgreSQL and associated applications, when making use of d
+# STIG ID: V-261907 (MEDIUM)
+
+META
+    esp_id `pg16-cd16-00-005900-dynamic-code-protect-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-005900: PostgreSQL and associated applications, when making use of dynamic code executio`
+    description `PostgreSQL and associated applications, when making use of dynamic code execution, must scan input data for invalid values that may indicate a code injection attack.`
+    author `example-security`
+    tags `pg16,stig,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-005900,NIST-800-53:SI-10`
+    control_objective `SI-10`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Review and remediate per DISA STIG guidance for CD16-00-005900.`
+
+    component_id `comp-pg16-db`
+
+    impl_SI_10 `This control is validated by checking the required PostgreSQL configuration against the DISA STIG baseline.`
+
+META_END
+
+DEF
+    OBJECT pg_param
+        parameter `shared_preload_libraries`
+    OBJECT_END
+
+    STATE param_state
+        found boolean = true
+        value string contains `pgaudit`
+    STATE_END
+
+    CRI AND
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF param_state
+            OBJECT_REF pg_param
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,0 +1,97 @@
+# KSI-IAM-AAM / KSI-IAM-JIT: Entra ID Groups for AWS Federation
+# Validates that the three Entra security groups exist and are correctly
+# configured for AWS IAM Identity Center SAML federation:
+# - aws-example-org-admins: maps to ScanSetAdmin
+# - aws-example-org-developers: maps to ScanSetDeveloper
+# - aws-example-org-readonly: maps to ScanSetReadOnly
+# All groups must be security-enabled and non-mail-enabled.
+
+META
+    esp_id `ksi-iam-aam-jit-entra-groups-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    title `KSI-IAM-AAM / KSI-IAM-JIT: Entra ID Groups for AWS Federation`
+    description `Validates the three Entra ID security groups exist and are correctly configured for AWS IAM Identity Center SAML federation with appropriate permission set mappings`
+    author `example-security`
+    tags `azure,entra,group,sso,federation,fedramp,KSI-IAM-AAM,KSI-IAM-JIT`
+
+    control_mapping `KSI:KSI-IAM-AAM,KSI:KSI-IAM-JIT`
+    control_objective `KSI-IAM-AAM,KSI-IAM-JIT,`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Azure:00000000-0000-0000-0000-000000000001:entra-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `3`
+    recommendation `Ensure all three Entra groups exist, are security-enabled, and have descriptions referencing their AWS permission set mappings.`
+
+    component_id `comp-azure-iam`
+
+    impl_KSI_IAM_AAM `Automated account management is validated by confirming three Entra ID security groups exist that govern AWS access through SAML federation. Each group description references its corresponding AWS IAM Identity Center permission set, confirming the mapping is documented and intentional. Human access to AWS is managed exclusively through Entra group membership, enabling automated provisioning and deprovisioning as users join or leave the organization - no direct AWS IAM users are created for human access.`
+
+    impl_KSI_IAM_JIT `Just-in-time access boundaries are validated by confirming the three Entra groups map to permission sets with bounded session durations: admins to a 4-hour session, developers to an 8-hour session, and read-only users to a 2-hour session. The groups are security groups (security_enabled = true) and not distribution lists (mail_enabled = false), confirming they are access control groups rather than communication groups. Group membership grants temporary federated credentials that expire at the session boundary.`
+
+META_END
+
+DEF
+    OBJECT admins_group
+        display_name `aws-example-org-admins`
+    OBJECT_END
+
+    OBJECT developers_group
+        display_name `aws-example-org-developers`
+    OBJECT_END
+
+    OBJECT readonly_group
+        display_name `aws-example-org-readonly`
+    OBJECT_END
+
+    # All groups: security-enabled, not mail-enabled, description references AWS mapping
+    STATE admins_group_compliant
+        found boolean = true
+        security_enabled boolean = true
+        mail_enabled boolean = false
+        description string contains `ScanSetAdmin`
+    STATE_END
+
+    STATE developers_group_compliant
+        found boolean = true
+        security_enabled boolean = true
+        mail_enabled boolean = false
+        description string contains `ScanSetDeveloper`
+    STATE_END
+
+    STATE readonly_group_compliant
+        found boolean = true
+        security_enabled boolean = true
+        mail_enabled boolean = false
+        description string contains `ScanSetReadOnly`
+    STATE_END
+
+    CRI AND
+        CTN az_entra_group
+            TEST all all AND
+            STATE_REF admins_group_compliant
+            OBJECT_REF admins_group
+        CTN_END
+
+        CTN az_entra_group
+            TEST all all AND
+            STATE_REF developers_group_compliant
+            OBJECT_REF developers_group
+        CTN_END
+
+        CTN az_entra_group
+            TEST all all AND
+            STATE_REF readonly_group_compliant
+            OBJECT_REF readonly_group
+        CTN_END
+    CRI_END
+DEF_END

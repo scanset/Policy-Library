@@ -1,0 +1,68 @@
+# STIG CD16-00-011100: PostgreSQL must generate audit records when unsuccessful attempts to delete cate
+# STIG ID: V-261955 (MEDIUM)
+
+META
+    esp_id `pg16-cd16-00-011100-audit-category-delete-fail-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `pg16`
+    criticality `high`
+
+    title `STIG CD16-00-011100: PostgreSQL must generate audit records when unsuccessful attempts to delete cate`
+    description `PostgreSQL must generate audit records when unsuccessful attempts to delete categories of information (e.g., classification levels/security levels) occur.`
+    author `example-security`
+    tags `pg16,stig,pgaudit,audit,disa-stig`
+
+    control_mapping `DISA-STIG:CD16-00-011100,NIST-800-53:AU-12`
+    control_objective `AU-12`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `dba`
+
+    control_origination `sp-system`
+    inherited_from `PostgreSQL16:localhost:pg-hardening`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Ensure pgaudit is in shared_preload_libraries and pgaudit.log includes ddl, write, role, and read categories.`
+
+    component_id `comp-pg16-db`
+
+    impl_AU_12 `PostgreSQL implements audit record generation through the pgaudit extension. The shared_preload_libraries parameter is validated to confirm pgaudit is loaded, and pgaudit.log is validated to include the required audit categories (ddl, write, role, read) for comprehensive event logging.`
+
+META_END
+
+DEF
+    OBJECT pg_preload
+        parameter `shared_preload_libraries`
+    OBJECT_END
+
+    OBJECT pg_audit_log
+        parameter `pgaudit.log`
+    OBJECT_END
+
+    STATE pgaudit_loaded
+        found boolean = true
+        value string contains `pgaudit`
+    STATE_END
+
+    STATE audit_categories
+        found boolean = true
+        value string contains `ddl`
+    STATE_END
+
+    CRI AND
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF pgaudit_loaded
+            OBJECT_REF pg_preload
+        CTN_END
+
+        CTN pg_config_param
+            TEST all all AND
+            STATE_REF audit_categories
+            OBJECT_REF pg_audit_log
+        CTN_END
+    CRI_END
+DEF_END

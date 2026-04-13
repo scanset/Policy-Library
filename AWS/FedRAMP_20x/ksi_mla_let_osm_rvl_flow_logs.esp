@@ -1,0 +1,90 @@
+# KSI-MLA-LET / KSI-MLA-OSM / KSI-MLA-RVL: VPC Flow Log Event Capture
+# Validates that VPC network events are captured, retained, and routed
+# to the centralized logging infrastructure:
+# - Flow log: ACTIVE, ALL traffic, delivering to CloudWatch
+# - Flow log group: exists with 365-day retention
+
+META
+    esp_id `ksi-mla-let-osm-rvl-flow-logs-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `high`
+
+    title `KSI-MLA-LET / KSI-MLA-OSM / KSI-MLA-RVL: VPC Flow Log Event Capture`
+    description `Validates VPC flow logs capture all network traffic and deliver to a retained CloudWatch log group, satisfying KSI-MLA-LET event type logging, KSI-MLA-OSM SIEM capability, and KSI-MLA-RVL log review`
+    author `example-security`
+    tags `aws,flow-log,cloudwatch,vpc,logging,fedramp,KSI-MLA-LET,KSI-MLA-OSM,KSI-MLA-RVL`
+
+    control_mapping `KSI:KSI-MLA-LET,KSI:KSI-MLA-OSM,KSI:KSI-MLA-RVL`
+    control_objective `KSI-MLA-LET,KSI-MLA-OSM,KSI-MLA-RVL`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `AWS:us-east-1:network-infrastructure`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Enable VPC flow logs with traffic_type=ALL delivering to CloudWatch Logs. Ensure the log group has retention_in_days >= 365.`
+
+    component_id `comp-aws-network`
+
+    impl_KSI_MLA_LET `Network event type logging is validated by confirming the VPC flow log captures ALL traffic (traffic_type = ALL) including both ACCEPT and REJECT decisions for all network flows traversing the VPC. The flow log status is validated as ACTIVE confirming continuous capture. This provides logging of all four network event types required for boundary monitoring: accepted inbound, rejected inbound, accepted outbound, and rejected outbound flows.`
+
+    impl_KSI_MLA_OSM `SIEM capability for network events is validated by confirming the flow log delivers successfully (deliver_logs_status = SUCCESS) to CloudWatch Logs (log_destination_type = cloud-watch-logs), and that the destination log group (/aws/vpc/example-org/flow-logs) exists with a 365-day retention policy. The combination of active delivery and adequate retention confirms that network flow data is available for SIEM ingestion and correlation with security findings from GuardDuty and Security Hub.`
+
+    impl_KSI_MLA_RVL `Log review capability for network events is validated by confirming the flow log group has retention_in_days >= 365, ensuring historical network flow data is retained long enough for incident investigation and periodic log review activities. The flow log delivering to CloudWatch (log_destination_type = cloud-watch-logs) confirms the data is available in the same centralized location as other security logs, enabling correlated review.`
+
+META_END
+
+DEF
+    VAR aws_region string `us-east-1`
+    VAR vpc_id string `vpc-0123456789abcdef0`
+    VAR flow_log_group string `/aws/vpc/example-org/flow-logs`
+
+    OBJECT vpc_flow_log
+        resource_id VAR vpc_id
+        region VAR aws_region
+    OBJECT_END
+
+    OBJECT flow_log_cw_group
+        log_group_name VAR flow_log_group
+        region VAR aws_region
+    OBJECT_END
+
+    # Flow log: active, all traffic, delivering to CloudWatch
+    STATE flow_log_compliant
+        found boolean = true
+        flow_log_status string = `ACTIVE`
+        traffic_type string = `ALL`
+        deliver_logs_status string = `SUCCESS`
+        log_destination_type string = `cloud-watch-logs`
+        log_group_name string = VAR flow_log_group
+    STATE_END
+
+    # Flow log group: exists with 365-day retention
+    STATE flow_log_group_compliant
+        found boolean = true
+        retention_in_days int >= 365
+        log_group_class string = `STANDARD`
+    STATE_END
+
+    CRI AND
+        # Flow log active and delivering all traffic to CloudWatch
+        CTN aws_flow_log
+            TEST all all AND
+            STATE_REF flow_log_compliant
+            OBJECT_REF vpc_flow_log
+        CTN_END
+
+        # Flow log group retained for 365 days
+        CTN aws_cloudwatch_log_group
+            TEST all all AND
+            STATE_REF flow_log_group_compliant
+            OBJECT_REF flow_log_cw_group
+        CTN_END
+    CRI_END
+DEF_END
