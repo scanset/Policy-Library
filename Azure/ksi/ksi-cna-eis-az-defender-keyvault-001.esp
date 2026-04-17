@@ -1,0 +1,52 @@
+# KSI-CNA-EIS: Azure Defender for Key Vault - Standard Tier Enabled
+# CIS Azure 2.1.8: Ensure Microsoft Defender for Key Vault is enabled
+
+META
+    esp_id `ksi-cna-eis-az-defender-keyvault-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    title `KSI-CNA-EIS: Azure Defender for Key Vault - Standard tier enabled`
+    description `Validates that Microsoft Defender for Key Vault is enabled at the Standard pricing tier, providing threat detection for unusual and potentially harmful access to key vaults`
+    author `security-team`
+    tags `azure,defender,keyvault,threat-protection,CIS-2.1.8`
+
+    control_mapping `KSI:KSI-CNA-EIS,NIST:SI-4,NIST:SC-12`
+    control_objective `KSI-CNA-EIS`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Enable Defender for Key Vault via az security pricing create --name KeyVaults --tier Standard`
+
+    impl_KSI_CNA_EIS `Automated security posture enforcement for cryptographic key stores is validated by confirming Microsoft Defender for Key Vault is enabled at the Standard pricing tier (pricingTier=Standard). Defender for Key Vault detects unusual and potentially harmful attempts to access or exploit key vault resources, including credential harvesting, unauthorized access from Tor exit nodes, and suspicious access patterns that indicate compromised identities.`
+
+META_END
+
+DEF
+    OBJECT defender_kv
+        name `KeyVaults`
+    OBJECT_END
+
+    STATE st_defender_enabled
+        found boolean = true
+        pricing_tier string = `Standard`
+        is_enabled boolean = true
+        deprecated boolean = false
+    STATE_END
+
+    CRI AND
+        CTN az_defender_pricing
+            TEST all all AND
+            STATE_REF st_defender_enabled
+            OBJECT_REF defender_kv
+        CTN_END
+    CRI_END
+DEF_END

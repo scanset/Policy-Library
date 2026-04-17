@@ -1,0 +1,54 @@
+# KSI-AFR-UCM: Azure Disk Encryption Set - Customer-Managed Key Encryption
+# Validates DES uses customer-managed keys with auto-rotation
+
+META
+    esp_id `ksi-afr-ucm-az-disk-encryption-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `critical`
+
+    title `KSI-AFR-UCM: Azure DES - customer-managed key with auto-rotation`
+    description `Validates that the disk encryption set uses customer-managed keys for encryption at rest with automatic key rotation enabled, ensuring data sovereignty and cryptographic agility`
+    author `security-team`
+    tags `azure,des,disk-encryption,cmk,key-rotation,encryption-at-rest`
+
+    control_mapping `KSI:KSI-AFR-UCM,NIST:SC-28(1),NIST:SC-12`
+    control_objective `KSI-AFR-UCM`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Create disk encryption set with customer-managed key and enable auto-rotation via the key vault key rotation policy`
+
+    impl_KSI_AFR_UCM `Use of cryptographic modules for data at rest is validated by confirming the disk encryption set is provisioned (provisioning_state=Succeeded) with EncryptionAtRestWithCustomerKey encryption type, ensuring managed disks are encrypted using organization-controlled keys stored in Azure Key Vault rather than platform-managed keys. Automatic key rotation (auto_key_rotation_enabled=true) ensures cryptographic keys are regularly rotated without manual intervention, maintaining cryptographic agility and reducing the window of exposure if a key is compromised. The DES uses a system-assigned managed identity for Key Vault access, following least-privilege principles.`
+
+META_END
+
+DEF
+    OBJECT des_demo
+        name `des-example-prod`
+        resource_group `rg-example-eastus`
+    OBJECT_END
+
+    STATE st_cmk_encrypted
+        found boolean = true
+        provisioning_state string = `Succeeded`
+        encryption_type string = `EncryptionAtRestWithCustomerKey`
+        auto_key_rotation_enabled boolean = true
+        identity_type string = `SystemAssigned`
+    STATE_END
+
+    CRI AND
+        CTN az_disk_encryption_set
+            TEST all all AND
+            STATE_REF st_cmk_encrypted
+            OBJECT_REF des_demo
+        CTN_END
+    CRI_END
+DEF_END

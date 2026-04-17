@@ -1,0 +1,52 @@
+# KSI-CNA-RNT: Azure NSG - Network Security Group Exists and Active
+# CIS Azure 6.1-6.4: Network security group restrictions
+
+META
+    esp_id `ksi-cna-rnt-az-nsg-baseline-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    title `KSI-CNA-RNT: Azure NSG - network security group provisioned`
+    description `Validates that the network security group is provisioned and has security rules configured to restrict network traffic, ensuring machine-based resources are not exposed without access controls`
+    author `security-team`
+    tags `azure,nsg,network,firewall,access-control,CIS-6.1,CIS-6.2`
+
+    control_mapping `KSI:KSI-CNA-RNT,NIST:SC-7,NIST:AC-4`
+    control_objective `KSI-CNA-RNT`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    customer_responsibility `configuration`
+
+    remediation_days `3`
+    recommendation `Ensure NSGs are attached to all subnets and NICs, with explicit deny rules for unnecessary inbound traffic`
+
+    impl_KSI_CNA_RNT `Network traffic restriction is validated by confirming the network security group exists (found=true) and is successfully provisioned (provisioningState=Succeeded). The NSG must have at least one security rule defined (security_rule_count>=1) to enforce traffic filtering. Network security groups are the primary mechanism for controlling inbound and outbound traffic to Azure virtual network resources, implementing microsegmentation and defense-in-depth at the network layer.`
+
+META_END
+
+DEF
+    OBJECT nsg_demo
+        name `nsg-example-prod`
+        resource_group `rg-example-eastus`
+    OBJECT_END
+
+    STATE st_nsg_active
+        found boolean = true
+        provisioning_state string = `Succeeded`
+        security_rule_count int >= 1
+    STATE_END
+
+    CRI AND
+        CTN az_nsg
+            TEST all all AND
+            STATE_REF st_nsg_active
+            OBJECT_REF nsg_demo
+        CTN_END
+    CRI_END
+DEF_END

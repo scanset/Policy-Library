@@ -1,0 +1,54 @@
+# KSI-MLA-OSM: Azure Log Analytics Workspace - Centralized Logging
+# Validates LAW exists with adequate retention for SIEM capability
+
+META
+    esp_id `ksi-mla-osm-az-log-analytics-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    title `KSI-MLA-OSM: Azure Log Analytics - centralized logging workspace`
+    description `Validates that a Log Analytics workspace is provisioned and operational with at least 30 days retention, providing centralized tamper-resistant logging for SIEM capability`
+    author `security-team`
+    tags `azure,log-analytics,siem,logging,retention,monitoring`
+
+    control_mapping `KSI:KSI-MLA-OSM,KSI:KSI-MLA-RVL,NIST:AU-6,NIST:SI-4`
+    control_objective `KSI-MLA-OSM`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Ensure Log Analytics workspace has at least 90 days retention and is connected to all diagnostic settings for centralized log collection`
+
+    impl_KSI_MLA_OSM `SIEM capability is validated by confirming a Log Analytics workspace exists (found=true) and is actively provisioned (provisioningState=Succeeded) with a retention period of at least 30 days (retentionInDays>=30). The workspace serves as the centralized, tamper-resistant log repository for Azure Monitor, Microsoft Defender for Cloud, and Azure Sentinel, aggregating security events, diagnostic logs, and activity logs from across the subscription for correlation, analysis, and incident response.`
+
+    impl_KSI_MLA_RVL `Log review capability is supported by the Log Analytics workspace providing queryable, indexed storage of all ingested log data with KQL query support for audit and investigation workflows.`
+
+META_END
+
+DEF
+    OBJECT law_demo
+        name `law-example-prod`
+        resource_group `rg-example-eastus`
+    OBJECT_END
+
+    STATE st_law_operational
+        found boolean = true
+        provisioning_state string = `Succeeded`
+        retention_in_days int >= 30
+    STATE_END
+
+    CRI AND
+        CTN az_log_analytics_workspace
+            TEST all all AND
+            STATE_REF st_law_operational
+            OBJECT_REF law_demo
+        CTN_END
+    CRI_END
+DEF_END

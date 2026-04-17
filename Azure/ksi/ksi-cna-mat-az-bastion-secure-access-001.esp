@@ -1,0 +1,53 @@
+# KSI-CNA-MAT: Azure Bastion - Secure Remote Access
+# Validates Bastion host for secure management plane access
+
+META
+    esp_id `ksi-cna-mat-az-bastion-secure-access-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    title `KSI-CNA-MAT: Azure Bastion - secure remote access without public IP`
+    description `Validates that Azure Bastion is provisioned to provide secure RDP and SSH access to VMs without exposing public IP addresses, minimizing the attack surface`
+    author `security-team`
+    tags `azure,bastion,remote-access,ssh,rdp,attack-surface`
+
+    control_mapping `KSI:KSI-CNA-MAT,KSI:KSI-CNA-RNT,NIST:AC-17,NIST:SC-7`
+    control_objective `KSI-CNA-MAT`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Deploy Azure Bastion in the hub VNet to provide secure browser-based RDP/SSH access, eliminating the need for public IPs on VMs`
+
+    impl_KSI_CNA_MAT `Attack surface minimization is validated by confirming Azure Bastion is provisioned (found=true, provisioningState=Succeeded) to provide secure, browser-based RDP and SSH connectivity to virtual machines. Bastion eliminates the need for public IP addresses on VMs and removes direct internet-facing management ports (3389/22), reducing the attack surface. All management traffic flows through the Bastion service over TLS, providing audit logging and session recording capability.`
+
+    impl_KSI_CNA_RNT `Network traffic restriction is enforced by Bastion proxying all management sessions through a hardened Azure-managed service, preventing direct inbound RDP/SSH connections to VM network interfaces.`
+
+META_END
+
+DEF
+    OBJECT bastion_demo
+        name `bas-example-prod`
+        resource_group `rg-example-eastus`
+    OBJECT_END
+
+    STATE st_bastion_active
+        found boolean = true
+        provisioning_state string = `Succeeded`
+    STATE_END
+
+    CRI AND
+        CTN az_bastion_host
+            TEST all all AND
+            STATE_REF st_bastion_active
+            OBJECT_REF bastion_demo
+        CTN_END
+    CRI_END
+DEF_END

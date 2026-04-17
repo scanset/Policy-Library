@@ -1,0 +1,52 @@
+# KSI-CNA-EIS: Azure Defender for ARM - Standard Tier Enabled
+# CIS Azure 2.1.10: Ensure Microsoft Defender for ARM is enabled
+
+META
+    esp_id `ksi-cna-eis-az-defender-arm-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    title `KSI-CNA-EIS: Azure Defender for ARM - Standard tier enabled`
+    description `Validates that Microsoft Defender for Resource Manager is enabled at the Standard pricing tier, providing threat detection for suspicious management operations across the Azure control plane`
+    author `security-team`
+    tags `azure,defender,arm,resource-manager,threat-protection,CIS-2.1.10`
+
+    control_mapping `KSI:KSI-CNA-EIS,NIST:SI-4,NIST:AU-6`
+    control_objective `KSI-CNA-EIS`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Enable Defender for ARM via az security pricing create --name Arm --tier Standard`
+
+    impl_KSI_CNA_EIS `Automated security posture enforcement for the Azure control plane is validated by confirming Microsoft Defender for Resource Manager is enabled at the Standard pricing tier (pricingTier=Standard). Defender for ARM monitors all Azure Resource Manager operations and detects suspicious management activities including operations from anomalous IP addresses, disabling of security controls, execution of suspicious scripts via Azure extensions, and lateral movement from management to data planes.`
+
+META_END
+
+DEF
+    OBJECT defender_arm
+        name `Arm`
+    OBJECT_END
+
+    STATE st_defender_enabled
+        found boolean = true
+        pricing_tier string = `Standard`
+        is_enabled boolean = true
+        deprecated boolean = false
+    STATE_END
+
+    CRI AND
+        CTN az_defender_pricing
+            TEST all all AND
+            STATE_REF st_defender_enabled
+            OBJECT_REF defender_arm
+        CTN_END
+    CRI_END
+DEF_END

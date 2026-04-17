@@ -1,0 +1,53 @@
+# KSI-SVC-ASM: Azure Key Vault - Soft Delete and Purge Protection
+# CIS Azure 8.5: Ensure key vault is recoverable
+
+META
+    esp_id `ksi-svc-asn-az-keyvault-protection-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `critical`
+
+    title `KSI-SVC-ASM: Azure Key Vault - soft delete and purge protection`
+    description `Validates that key vault has soft delete enabled and purge protection active, ensuring cryptographic keys and secrets cannot be permanently deleted without a retention period`
+    author `security-team`
+    tags `azure,keyvault,soft-delete,purge-protection,secrets,CIS-8.5`
+
+    control_mapping `KSI:KSI-SVC-ASM,NIST:SC-12,NIST:SC-28(1)`
+    control_objective `KSI-SVC-ASM`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    customer_responsibility `configuration`
+
+    remediation_days `3`
+    recommendation `Enable soft delete and purge protection via az keyvault update --enable-soft-delete true --enable-purge-protection true`
+
+    impl_KSI_SVC_ASM `Automated secret management protection is validated by confirming key vault soft delete is enabled (enableSoftDelete=true) and purge protection is active (enablePurgeProtection=true). Soft delete ensures deleted keys, secrets, and certificates are recoverable for the retention period (Azure default: 90 days when not explicitly set). Purge protection prevents permanent deletion during the retention window, even by privileged administrators. Together these controls prevent accidental or malicious destruction of cryptographic material.`
+
+META_END
+
+DEF
+    OBJECT kv_demo
+        name `kv-example-prod`
+        resource_group `rg-example-eastus`
+    OBJECT_END
+
+    STATE st_vault_protected
+        found boolean = true
+        provisioning_state string = `Succeeded`
+        enable_soft_delete boolean = true
+        enable_purge_protection boolean = true
+    STATE_END
+
+    CRI AND
+        CTN az_key_vault
+            TEST all all AND
+            STATE_REF st_vault_protected
+            OBJECT_REF kv_demo
+        CTN_END
+    CRI_END
+DEF_END

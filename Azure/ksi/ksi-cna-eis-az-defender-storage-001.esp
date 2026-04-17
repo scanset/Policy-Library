@@ -1,0 +1,52 @@
+# KSI-CNA-EIS: Azure Defender for Storage - Standard Tier Enabled
+# CIS Azure 2.1.4: Ensure Microsoft Defender for Storage is enabled
+
+META
+    esp_id `ksi-cna-eis-az-defender-storage-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    title `KSI-CNA-EIS: Azure Defender for Storage - Standard tier enabled`
+    description `Validates that Microsoft Defender for Storage is enabled at the Standard pricing tier, providing threat detection for unusual access patterns and potential data exfiltration from storage accounts`
+    author `security-team`
+    tags `azure,defender,storage,threat-protection,CIS-2.1.4`
+
+    control_mapping `KSI:KSI-CNA-EIS,NIST:SI-4,NIST:SC-28`
+    control_objective `KSI-CNA-EIS`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Enable Defender for Storage via az security pricing create --name StorageAccounts --tier Standard`
+
+    impl_KSI_CNA_EIS `Automated security posture enforcement for storage resources is validated by confirming Microsoft Defender for Storage is enabled at the Standard pricing tier (pricingTier=Standard) with the DefenderForStorageV2 sub-plan. This plan provides threat detection for unusual access patterns, potential data exfiltration, suspicious anonymous access, and anomalous data transfer volumes across blob, file, queue, and table storage endpoints.`
+
+META_END
+
+DEF
+    OBJECT defender_sa
+        name `StorageAccounts`
+    OBJECT_END
+
+    STATE st_defender_enabled
+        found boolean = true
+        pricing_tier string = `Standard`
+        is_enabled boolean = true
+        deprecated boolean = false
+    STATE_END
+
+    CRI AND
+        CTN az_defender_pricing
+            TEST all all AND
+            STATE_REF st_defender_enabled
+            OBJECT_REF defender_sa
+        CTN_END
+    CRI_END
+DEF_END

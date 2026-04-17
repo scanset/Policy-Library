@@ -1,0 +1,58 @@
+# KSI-MLA-LET: Azure Activity Log Alert - NSG Changes
+# CIS Azure 5.2.3: Alert on create/update NSG
+# CIS Azure 5.2.4: Alert on delete NSG
+
+META
+    esp_id `ksi-mla-let-az-activity-alert-nsg-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    title `KSI-MLA-LET: Azure Activity Alert - NSG write monitored`
+    description `Validates that an activity log alert exists and is enabled to detect creation or modification of network security groups, ensuring network access changes are tracked`
+    author `security-team`
+    tags `azure,activity-log,alert,nsg,network,CIS-5.2.3`
+
+    control_mapping `KSI:KSI-MLA-LET,KSI:KSI-CMT-LMC,NIST:AU-12,NIST:SI-4`
+    control_objective `KSI-MLA-LET`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    customer_responsibility `configuration`
+
+    remediation_days `3`
+    recommendation `Create activity log alert via az monitor activity-log alert create --name alert-nsg-write --condition category=Administrative and operationName=Microsoft.Network/networkSecurityGroups/write --action-group <ag-name>`
+
+    impl_KSI_MLA_LET `Event logging for network security changes is validated by confirming an activity log alert exists (found=true) and is enabled (enabled=true) that monitors the Administrative category for Microsoft.Network/networkSecurityGroups/write operations. The alert must have at least one action group configured to ensure notifications are delivered when NSGs are created or modified. NSG changes directly affect network segmentation and traffic flow controls.`
+
+    impl_KSI_CMT_LMC `Changes to network security groups are logged and monitored through activity log alerts that trigger on networkSecurityGroups/write operations, providing real-time notification of network access control modifications.`
+
+META_END
+
+DEF
+    OBJECT alert_nsg_write
+        name `alert-nsg-write`
+        resource_group `rg-example-eastus`
+    OBJECT_END
+
+    STATE st_alert_active
+        found boolean = true
+        enabled boolean = true
+        category string = `Administrative`
+        operation_name string = `Microsoft.Network/networkSecurityGroups/write`
+        has_action_groups boolean = true
+        action_group_count int >= 1
+    STATE_END
+
+    CRI AND
+        CTN az_activity_log_alert
+            TEST all all AND
+            STATE_REF st_alert_active
+            OBJECT_REF alert_nsg_write
+        CTN_END
+    CRI_END
+DEF_END

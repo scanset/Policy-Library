@@ -1,0 +1,54 @@
+# KSI-CNA-ULN: Azure Virtual Network - Logical Network Segmentation
+# Validates VNet is provisioned with subnets for traffic flow control
+
+META
+    esp_id `ksi-cna-uln-az-vnet-baseline-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    title `KSI-CNA-ULN: Azure VNet - logical network segmentation`
+    description `Validates that the virtual network is provisioned with subnets defined for network segmentation and traffic flow enforcement`
+    author `security-team`
+    tags `azure,vnet,network,segmentation,subnets`
+
+    control_mapping `KSI:KSI-CNA-ULN,KSI:KSI-CNA-RNT,NIST:SC-7,NIST:AC-4`
+    control_objective `KSI-CNA-ULN`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Ensure all workloads are deployed into virtual networks with appropriate subnet segmentation and NSGs attached to each subnet`
+
+    impl_KSI_CNA_ULN `Logical networking is validated by confirming the virtual network exists (found=true) and is successfully provisioned (provisioningState=Succeeded) with at least one subnet defined (subnet_count>=1). Virtual networks provide the foundational network isolation boundary in Azure, and subnet segmentation within VNets enables microsegmentation of workloads and enforcement of traffic flow controls via NSGs and route tables.`
+
+    impl_KSI_CNA_RNT `Network traffic restriction is supported by the virtual network providing the isolation boundary within which NSGs can be applied to subnets and NICs to filter inbound and outbound traffic.`
+
+META_END
+
+DEF
+    OBJECT vnet_demo
+        name `vnet-example-prod`
+        resource_group `rg-example-eastus`
+    OBJECT_END
+
+    STATE st_vnet_segmented
+        found boolean = true
+        provisioning_state string = `Succeeded`
+        subnet_count int >= 1
+    STATE_END
+
+    CRI AND
+        CTN az_virtual_network
+            TEST all all AND
+            STATE_REF st_vnet_segmented
+            OBJECT_REF vnet_demo
+        CTN_END
+    CRI_END
+DEF_END

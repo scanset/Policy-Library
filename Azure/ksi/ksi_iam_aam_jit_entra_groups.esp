@@ -1,9 +1,9 @@
 # KSI-IAM-AAM / KSI-IAM-JIT: Entra ID Groups for AWS Federation
 # Validates that the three Entra security groups exist and are correctly
 # configured for AWS IAM Identity Center SAML federation:
-# - aws-example-org-admins: maps to ScanSetAdmin
-# - aws-example-org-developers: maps to ScanSetDeveloper
-# - aws-example-org-readonly: maps to ScanSetReadOnly
+# - aws-example-org-admins: maps to PlatformAdmin
+# - aws-example-org-developers: maps to PlatformDeveloper
+# - aws-example-org-readonly: maps to PlatformReadOnly
 # All groups must be security-enabled and non-mail-enabled.
 
 META
@@ -58,21 +58,21 @@ DEF
         found boolean = true
         security_enabled boolean = true
         mail_enabled boolean = false
-        description string contains `ScanSetAdmin`
+        description string contains `PlatformAdmin`
     STATE_END
 
     STATE developers_group_compliant
         found boolean = true
         security_enabled boolean = true
         mail_enabled boolean = false
-        description string contains `ScanSetDeveloper`
+        description string contains `PlatformDeveloper`
     STATE_END
 
     STATE readonly_group_compliant
         found boolean = true
         security_enabled boolean = true
         mail_enabled boolean = false
-        description string contains `ScanSetReadOnly`
+        description string contains `PlatformReadOnly`
     STATE_END
 
     CRI AND

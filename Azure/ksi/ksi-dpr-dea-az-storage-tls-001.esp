@@ -1,0 +1,54 @@
+# KSI-DPR-DEA: Azure Storage Account - HTTPS and TLS 1.2 Enforcement
+# CIS Azure 3.1: Ensure storage account requires HTTPS
+# CIS Azure 3.15: Ensure minimum TLS version is 1.2
+
+META
+    esp_id `ksi-dpr-dea-az-storage-tls-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    title `KSI-SVC-SNT: Azure Storage - HTTPS and TLS 1.2 required`
+    description `Validates that the storage account enforces HTTPS-only access and requires TLS 1.2 minimum, preventing cleartext data transmission and weak cipher negotiation`
+    author `security-team`
+    tags `azure,storage,tls,https,encryption-in-transit,CIS-3.1,CIS-3.15`
+
+    control_mapping `KSI:KSI-SVC-SNT,NIST:SC-8,NIST:SC-8(1)`
+    control_objective `KSI-SVC-SNT`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    customer_responsibility `configuration`
+
+    remediation_days `3`
+    recommendation `Set minimum TLS version to TLS1_2 and enable HTTPS-only via az storage account update --min-tls-version TLS1_2 --https-only true`
+
+    impl_KSI_SVC_SNT `Network traffic to storage accounts is secured by enforcing HTTPS-only access (supportsHttpsTrafficOnly=true) and requiring TLS 1.2 as the minimum protocol version (minimumTlsVersion=TLS1_2). This prevents cleartext HTTP access to storage endpoints and blocks connections using deprecated TLS 1.0/1.1 which have known vulnerabilities. The storage account provisioning state is also validated to confirm the resource is fully deployed.`
+
+META_END
+
+DEF
+    OBJECT sa_demo
+        name `stexampleprod001`
+        resource_group `rg-example-eastus`
+    OBJECT_END
+
+    STATE st_tls_enforced
+        found boolean = true
+        provisioning_state string = `Succeeded`
+        enable_https_traffic_only boolean = true
+        minimum_tls_version string = `TLS1_2`
+    STATE_END
+
+    CRI AND
+        CTN az_storage_account
+            TEST all all AND
+            STATE_REF st_tls_enforced
+            OBJECT_REF sa_demo
+        CTN_END
+    CRI_END
+DEF_END

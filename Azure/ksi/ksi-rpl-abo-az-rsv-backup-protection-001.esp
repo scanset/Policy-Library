@@ -1,0 +1,58 @@
+# KSI-RPL-ABO: Azure Recovery Services Vault - Backup Protection
+# Validates RSV soft delete, geo-redundant storage, and cross-region restore
+
+META
+    esp_id `ksi-rpl-abo-az-rsv-backup-protection-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    title `KSI-RPL-ABO: Azure RSV - backup protection and geo-redundancy`
+    description `Validates that the Recovery Services vault has soft delete enabled with adequate retention, geo-redundant storage for cross-region durability, and cross-region restore capability for disaster recovery`
+    author `security-team`
+    tags `azure,rsv,backup,geo-redundant,soft-delete,disaster-recovery`
+
+    control_mapping `KSI:KSI-RPL-ABO,KSI:KSI-RPL-ARP,NIST:CP-9,NIST:CP-10`
+    control_objective `KSI-RPL-ABO`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Configure RSV with geo-redundant storage, enable soft delete with at least 14 day retention, and enable cross-region restore for disaster recovery capability`
+
+    impl_KSI_RPL_ABO `Backup alignment with recovery objectives is validated by confirming the Recovery Services vault uses geo-redundant storage (storage_redundancy=GeoRedundant) for cross-region data durability, has cross-region restore enabled for disaster recovery in a paired region, soft delete is active (soft_delete_state=Enabled) with at least 14 days retention to prevent accidental or malicious deletion of backup data, and enhanced security state is enabled for additional protection against ransomware attacks on backup infrastructure.`
+
+    impl_KSI_RPL_ARP `Recovery plan alignment is validated by confirming geo-redundant storage and cross-region restore are enabled, ensuring backup data survives a complete regional outage and can be restored in the paired Azure region.`
+
+META_END
+
+DEF
+    OBJECT rsv_demo
+        name `rsv-example-prod`
+        resource_group `rg-example-eastus`
+    OBJECT_END
+
+    STATE st_backup_protected
+        found boolean = true
+        provisioning_state string = `Succeeded`
+        storage_redundancy string = `GeoRedundant`
+        cross_region_restore string = `Enabled`
+        soft_delete_state string = `Enabled`
+        soft_delete_retention_days int >= 14
+        enhanced_security_state string = `Enabled`
+    STATE_END
+
+    CRI AND
+        CTN az_recovery_services_vault
+            TEST all all AND
+            STATE_REF st_backup_protected
+            OBJECT_REF rsv_demo
+        CTN_END
+    CRI_END
+DEF_END
