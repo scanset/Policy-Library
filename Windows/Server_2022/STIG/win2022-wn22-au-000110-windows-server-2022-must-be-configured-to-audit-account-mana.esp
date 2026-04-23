@@ -1,0 +1,60 @@
+# WN22-AU-000110: Windows Server 2022 must be configured to audit Account Management - User Account Management successes.
+# Source: Windows Server 2022 STIG r8
+# Severity: medium
+# Generated from 01-extract/output/windows-server-2022-stig-r8-controls.json
+
+META
+    esp_id `win2022-wn22-au-000110-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `windows`
+    criticality `high`
+
+    title `Windows Server 2022 must be configured to audit Account Management - User Account Management successes.`
+    description `Maintaining an audit trail of system activity logs can help identify configuration errors, troubleshoot service disruptions, and analyze compromises that have occurred, as well as detect attacks. Audit logs are necessary to provide a trail of evidence in case the system or network is compromised. Collecting this data is essential for analyzing the security of information assets and detecting signs of suspicious and unexpected behavior. User Account Management records events such as creating, cha`
+    author `scanset-security`
+    tags `windows,server-2022,stig,audit-policy,medium,ksi-iam-jit,ksi-mla-let,ksi-mla-rvl,ksi-svc-acm`
+
+    control_mapping `KSI:KSI-IAM-JIT,KSI:KSI-MLA-LET,KSI:KSI-MLA-RVL,KSI:KSI-SVC-ACM,NIST-800-53:AC-2(4),NIST-800-53:AU-12`
+    control_objective `KSI-IAM-JIT,KSI-MLA-LET,KSI-MLA-RVL,KSI-SVC-ACM`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Windows:server-2022:endpoint`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Configure the policy value for Computer Configuration >> Windows Settings >> Security Settings >> Advanced Audit Policy Configuration >> System Audit Policies >> Account Management >> Audit User Account Management with "Success" selected.`
+
+    component_id `comp-windows-audit-policy`
+
+    impl_KSI_IAM_JIT `Windows Server implements KSI-IAM-JIT by enabling the 'Account Management >> User Account Management' audit subcategory for success events via auditpol. The ESP scanner queries the subcategory via the windows_audit_policy CTN and fails the policy if the required success audit flag is not enabled. Remediation sets the subcategory via Group Policy (Advanced Audit Policy Configuration) or auditpol /set.`
+    impl_KSI_MLA_LET `Windows Server implements KSI-MLA-LET by enabling the 'Account Management >> User Account Management' audit subcategory for success events via auditpol. The ESP scanner queries the subcategory via the windows_audit_policy CTN and fails the policy if the required success audit flag is not enabled. Remediation sets the subcategory via Group Policy (Advanced Audit Policy Configuration) or auditpol /set.`
+    impl_KSI_MLA_RVL `Windows Server implements KSI-MLA-RVL by enabling the 'Account Management >> User Account Management' audit subcategory for success events via auditpol. The ESP scanner queries the subcategory via the windows_audit_policy CTN and fails the policy if the required success audit flag is not enabled. Remediation sets the subcategory via Group Policy (Advanced Audit Policy Configuration) or auditpol /set.`
+    impl_KSI_SVC_ACM `Windows Server implements KSI-SVC-ACM by enabling the 'Account Management >> User Account Management' audit subcategory for success events via auditpol. The ESP scanner queries the subcategory via the windows_audit_policy CTN and fails the policy if the required success audit flag is not enabled. Remediation sets the subcategory via Group Policy (Advanced Audit Policy Configuration) or auditpol /set.`
+    impl_AC_2_4 `Windows Server implements AC-2(4) by enabling the 'Account Management >> User Account Management' audit subcategory for success events via auditpol. The ESP scanner queries the subcategory via the windows_audit_policy CTN and fails the policy if the required success audit flag is not enabled. Remediation sets the subcategory via Group Policy (Advanced Audit Policy Configuration) or auditpol /set.`
+    impl_AU_12 `Windows Server implements AU-12 by enabling the 'Account Management >> User Account Management' audit subcategory for success events via auditpol. The ESP scanner queries the subcategory via the windows_audit_policy CTN and fails the policy if the required success audit flag is not enabled. Remediation sets the subcategory via Group Policy (Advanced Audit Policy Configuration) or auditpol /set.`
+
+META_END
+
+DEF
+    OBJECT target
+        subcategory `User Account Management`
+    OBJECT_END
+
+    STATE compliant
+        exists boolean = true
+        success_audited boolean = true
+    STATE_END
+
+    CRI AND
+        CTN windows_audit_policy
+            TEST all all AND
+            STATE_REF compliant
+            OBJECT_REF target
+        CTN_END
+    CRI_END
+DEF_END

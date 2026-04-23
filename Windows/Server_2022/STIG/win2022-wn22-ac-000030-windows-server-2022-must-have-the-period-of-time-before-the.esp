@@ -1,0 +1,57 @@
+# WN22-AC-000030: Windows Server 2022 must have the period of time before the bad logon counter is reset configured to 15 minutes or greater.
+# Source: Windows Server 2022 STIG r8
+# Severity: medium
+# Generated from 01-extract/output/windows-server-2022-stig-r8-controls.json
+
+META
+    esp_id `win2022-wn22-ac-000030-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `windows`
+    criticality `high`
+
+    title `Windows Server 2022 must have the period of time before the bad logon counter is reset configured to 15 minutes or greater.`
+    description `The account lockout feature, when enabled, prevents brute-force password attacks on the system. This parameter specifies the period of time that must pass after failed logon attempts before the counter is reset to "0". The smaller this value is, the less effective the account lockout feature will be in protecting the local system.`
+    author `scanset-security`
+    tags `windows,server-2022,stig,medium,account-policy,security-policy,ksi-iam-jit,ksi-iam-sus`
+
+    control_mapping `KSI:KSI-IAM-JIT,KSI:KSI-IAM-SUS,NIST-800-53:AC-7`
+    control_objective `KSI-IAM-JIT,KSI-IAM-SUS`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Windows:server-2022:endpoint`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Configure the policy value for Computer Configuration >> Windows Settings >> Security Settings >> Account Policies >> Account Lockout Policy >> Reset account lockout counter after to at least "15" minutes.`
+
+    component_id `comp-windows-security-policy`
+
+    impl_KSI_IAM_JIT `Windows Server implements KSI-IAM-JIT by enforcing ResetLockoutCount per the STIG (Account lockout counter reset must be >= 15 minutes.). The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
+    impl_KSI_IAM_SUS `Windows Server implements KSI-IAM-SUS by enforcing ResetLockoutCount per the STIG (Account lockout counter reset must be >= 15 minutes.). The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
+    impl_AC_7 `Windows Server implements AC-7 by enforcing ResetLockoutCount per the STIG (Account lockout counter reset must be >= 15 minutes.). The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
+
+META_END
+
+DEF
+    OBJECT target
+        policy_name `ResetLockoutCount`
+    OBJECT_END
+
+    STATE compliant
+        exists boolean = true
+        value_int int >= 15
+    STATE_END
+
+    CRI AND
+        CTN windows_security_policy
+            TEST all all AND
+            STATE_REF compliant
+            OBJECT_REF target
+        CTN_END
+    CRI_END
+DEF_END

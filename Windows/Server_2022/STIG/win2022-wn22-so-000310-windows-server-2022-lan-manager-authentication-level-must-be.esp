@@ -1,0 +1,61 @@
+# WN22-SO-000310: Windows Server 2022 LAN Manager authentication level must be configured to send NTLMv2 response only and to refuse LM and NTLM.
+# Source: Windows Server 2022 STIG r8
+# Severity: high
+# Generated from 01-extract/output/windows-server-2022-stig-r8-controls.json
+
+META
+    esp_id `win2022-wn22-so-000310-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `windows`
+    criticality `critical`
+
+    title `Windows Server 2022 LAN Manager authentication level must be configured to send NTLMv2 response only and to refuse LM and NTLM.`
+    description `The Kerberos v5 authentication protocol is the default for authentication of users who are logging on to domain accounts. NTLM, which is less secure, is retained in later Windows versions for compatibility with clients and servers that are running earlier versions of Windows or applications that still use it. It is also used to authenticate logons to standalone or nondomain-joined computers that are running later versions.`
+    author `scanset-security`
+    tags `windows,server-2022,stig,registry,high,ksi-cmt-lmc,ksi-cmt-rmv,ksi-mla-evc,ksi-svc-acm`
+
+    control_mapping `KSI:KSI-CMT-LMC,KSI:KSI-CMT-RMV,KSI:KSI-MLA-EVC,KSI:KSI-SVC-ACM,NIST-800-53:CM-6`
+    control_objective `KSI-CMT-LMC,KSI-CMT-RMV,KSI-MLA-EVC,KSI-SVC-ACM`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Windows:server-2022:endpoint`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Configure the policy value for Computer Configuration >> Windows Settings >> Security Settings >> Local Policies >> Security Options >> Network security: LAN Manager authentication level to "Send NTLMv2 response only. Refuse LM & NTLM".`
+
+    component_id `comp-windows-registry`
+
+    impl_KSI_CMT_LMC `Windows Server implements KSI-CMT-LMC by setting registry value 'LmCompatibilityLevel' under 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa' to the STIG-mandated REG_DWORD value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match the required setting. Remediation restores the configuration via Group Policy or direct registry edit per the STIG fix guidance.`
+    impl_KSI_CMT_RMV `Windows Server implements KSI-CMT-RMV by setting registry value 'LmCompatibilityLevel' under 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa' to the STIG-mandated REG_DWORD value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match the required setting. Remediation restores the configuration via Group Policy or direct registry edit per the STIG fix guidance.`
+    impl_KSI_MLA_EVC `Windows Server implements KSI-MLA-EVC by setting registry value 'LmCompatibilityLevel' under 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa' to the STIG-mandated REG_DWORD value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match the required setting. Remediation restores the configuration via Group Policy or direct registry edit per the STIG fix guidance.`
+    impl_KSI_SVC_ACM `Windows Server implements KSI-SVC-ACM by setting registry value 'LmCompatibilityLevel' under 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa' to the STIG-mandated REG_DWORD value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match the required setting. Remediation restores the configuration via Group Policy or direct registry edit per the STIG fix guidance.`
+    impl_CM_6 `Windows Server implements CM-6 by setting registry value 'LmCompatibilityLevel' under 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa' to the STIG-mandated REG_DWORD value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match the required setting. Remediation restores the configuration via Group Policy or direct registry edit per the STIG fix guidance.`
+
+META_END
+
+DEF
+    OBJECT target
+        hive `HKEY_LOCAL_MACHINE`
+        key `SYSTEM\CurrentControlSet\Control\Lsa`
+        name `LmCompatibilityLevel`
+    OBJECT_END
+
+    STATE compliant
+        exists boolean = true
+        value_int int = 5
+    STATE_END
+
+    CRI AND
+        CTN registry
+            TEST all all AND
+            STATE_REF compliant
+            OBJECT_REF target
+        CTN_END
+    CRI_END
+DEF_END

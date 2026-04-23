@@ -1,0 +1,61 @@
+# WN22-SO-000250: Windows Server 2022 must restrict anonymous access to Named Pipes and Shares.
+# Source: Windows Server 2022 STIG r8
+# Severity: high
+# Generated from 01-extract/output/windows-server-2022-stig-r8-controls.json
+
+META
+    esp_id `win2022-wn22-so-000250-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `windows`
+    criticality `critical`
+
+    title `Windows Server 2022 must restrict anonymous access to Named Pipes and Shares.`
+    description `Allowing anonymous access to named pipes or shares provides the potential for unauthorized system access. This setting restricts access to those defined in "Network access: Named Pipes that can be accessed anonymously" and "Network access: Shares that can be accessed anonymously", both of which must be blank under other requirements.`
+    author `scanset-security`
+    tags `windows,server-2022,stig,registry,high,ksi-cna-uln,ksi-iam-elp,ksi-piy-rsd,ksi-svc-prr`
+
+    control_mapping `KSI:KSI-CNA-ULN,KSI:KSI-IAM-ELP,KSI:KSI-PIY-RSD,KSI:KSI-SVC-PRR,NIST-800-53:SC-4`
+    control_objective `KSI-CNA-ULN,KSI-IAM-ELP,KSI-PIY-RSD,KSI-SVC-PRR`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Windows:server-2022:endpoint`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Configure the policy value for Computer Configuration >> Windows Settings >> Security Settings >> Local Policies >> Security Options >> Network access: Restrict anonymous access to Named Pipes and Shares to "Enabled".`
+
+    component_id `comp-windows-registry`
+
+    impl_KSI_CNA_ULN `Windows Server implements KSI-CNA-ULN by setting registry value 'RestrictNullSessAccess' under 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanManServer\Parameters' to the STIG-mandated REG_DWORD value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match the required setting. Remediation restores the configuration via Group Policy or direct registry edit per the STIG fix guidance.`
+    impl_KSI_IAM_ELP `Windows Server implements KSI-IAM-ELP by setting registry value 'RestrictNullSessAccess' under 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanManServer\Parameters' to the STIG-mandated REG_DWORD value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match the required setting. Remediation restores the configuration via Group Policy or direct registry edit per the STIG fix guidance.`
+    impl_KSI_PIY_RSD `Windows Server implements KSI-PIY-RSD by setting registry value 'RestrictNullSessAccess' under 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanManServer\Parameters' to the STIG-mandated REG_DWORD value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match the required setting. Remediation restores the configuration via Group Policy or direct registry edit per the STIG fix guidance.`
+    impl_KSI_SVC_PRR `Windows Server implements KSI-SVC-PRR by setting registry value 'RestrictNullSessAccess' under 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanManServer\Parameters' to the STIG-mandated REG_DWORD value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match the required setting. Remediation restores the configuration via Group Policy or direct registry edit per the STIG fix guidance.`
+    impl_SC_4 `Windows Server implements SC-4 by setting registry value 'RestrictNullSessAccess' under 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanManServer\Parameters' to the STIG-mandated REG_DWORD value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match the required setting. Remediation restores the configuration via Group Policy or direct registry edit per the STIG fix guidance.`
+
+META_END
+
+DEF
+    OBJECT target
+        hive `HKEY_LOCAL_MACHINE`
+        key `SYSTEM\CurrentControlSet\Services\LanManServer\Parameters`
+        name `RestrictNullSessAccess`
+    OBJECT_END
+
+    STATE compliant
+        exists boolean = true
+        value_int int = 1
+    STATE_END
+
+    CRI AND
+        CTN registry
+            TEST all all AND
+            STATE_REF compliant
+            OBJECT_REF target
+        CTN_END
+    CRI_END
+DEF_END

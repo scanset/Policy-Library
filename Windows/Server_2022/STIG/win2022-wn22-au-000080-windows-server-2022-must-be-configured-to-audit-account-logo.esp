@@ -1,0 +1,56 @@
+# WN22-AU-000080: Windows Server 2022 must be configured to audit Account Logon - Credential Validation failures.
+# Source: Windows Server 2022 STIG r8
+# Severity: medium
+# Generated from 01-extract/output/windows-server-2022-stig-r8-controls.json
+
+META
+    esp_id `win2022-wn22-au-000080-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `windows`
+    criticality `high`
+
+    title `Windows Server 2022 must be configured to audit Account Logon - Credential Validation failures.`
+    description `Maintaining an audit trail of system activity logs can help identify configuration errors, troubleshoot service disruptions, and analyze compromises that have occurred, as well as detect attacks. Audit logs are necessary to provide a trail of evidence in case the system or network is compromised. Collecting this data is essential for analyzing the security of information assets and detecting signs of suspicious and unexpected behavior. Credential Validation records events related to validation t`
+    author `scanset-security`
+    tags `windows,server-2022,stig,audit-policy,medium,ksi-mla-let`
+
+    control_mapping `KSI:KSI-MLA-LET,NIST-800-53:AU-12`
+    control_objective `KSI-MLA-LET`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Windows:server-2022:endpoint`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Configure the policy value for Computer Configuration >> Windows Settings >> Security Settings >> Advanced Audit Policy Configuration >> System Audit Policies >> Account Logon >> Audit Credential Validation with "Failure" selected.`
+
+    component_id `comp-windows-audit-policy`
+
+    impl_KSI_MLA_LET `Windows Server implements KSI-MLA-LET by enabling the 'Account Logon >> Credential Validation' audit subcategory for failure events via auditpol. The ESP scanner queries the subcategory via the windows_audit_policy CTN and fails the policy if the required failure audit flag is not enabled. Remediation sets the subcategory via Group Policy (Advanced Audit Policy Configuration) or auditpol /set.`
+    impl_AU_12 `Windows Server implements AU-12 by enabling the 'Account Logon >> Credential Validation' audit subcategory for failure events via auditpol. The ESP scanner queries the subcategory via the windows_audit_policy CTN and fails the policy if the required failure audit flag is not enabled. Remediation sets the subcategory via Group Policy (Advanced Audit Policy Configuration) or auditpol /set.`
+
+META_END
+
+DEF
+    OBJECT target
+        subcategory `Credential Validation`
+    OBJECT_END
+
+    STATE compliant
+        exists boolean = true
+        failure_audited boolean = true
+    STATE_END
+
+    CRI AND
+        CTN windows_audit_policy
+            TEST all all AND
+            STATE_REF compliant
+            OBJECT_REF target
+        CTN_END
+    CRI_END
+DEF_END

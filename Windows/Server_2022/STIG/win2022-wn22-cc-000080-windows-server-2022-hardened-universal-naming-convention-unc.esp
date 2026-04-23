@@ -1,0 +1,72 @@
+# WN22-CC-000080: Windows Server 2022 hardened Universal Naming Convention (UNC) paths must be defined to require mutual authentication and integrity for at least the \\*\SYSVOL and \\*\NETLOGON shares.
+# Source: Windows Server 2022 STIG r8
+# Severity: medium
+# Generated from 01-extract/output/windows-server-2022-stig-r8-controls.json
+
+META
+    esp_id `win2022-wn22-cc-000080-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `windows`
+    criticality `high`
+
+    title `Windows Server 2022 hardened Universal Naming Convention (UNC) paths must be defined to require mutual authentication and integrity for at least the \\*\SYSVOL and \\*\NETLOGON shares.`
+    description `Additional security requirements are applied to UNC paths specified in hardened UNC paths before allowing access to them. This aids in preventing tampering with or spoofing of connections to these paths.`
+    author `scanset-security`
+    tags `windows,server-2022,stig,registry,reg-sz,medium,ksi-cmt-lmc,ksi-cmt-rmv,ksi-mla-evc,ksi-svc-acm`
+
+    control_mapping `KSI:KSI-CMT-LMC,KSI:KSI-CMT-RMV,KSI:KSI-MLA-EVC,KSI:KSI-SVC-ACM,NIST-800-53:CM-6`
+    control_objective `KSI-CMT-LMC,KSI-CMT-RMV,KSI-MLA-EVC,KSI-SVC-ACM`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Windows:server-2022:endpoint`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Configure the policy value for Computer Configuration >> Administrative Templates >> Network >> Network Provider >> Hardened UNC Paths" to "Enabled" with at least the following configured in "Hardened UNC Paths" (click the "Show" button to display): Value Name: \\*\SYSVOL Value: RequireMutualAuthentication=1, RequireIntegrity=1 Value Name: \\*\NETLOGON Value: RequireMutualAuthentication=1, RequireIntegrity=1`
+
+    component_id `comp-windows-registry`
+
+    impl_KSI_CMT_LMC `Windows Server implements KSI-CMT-LMC by setting registry value '\\*\NETLOGON,\\*\SYSVOL' (REG_SZ) under 'HKLM\SOFTWARE\Policies\Microsoft\Windows\NetworkProvider\HardenedPaths' to the STIG-required value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match. Remediation sets the value via Group Policy or direct registry edit.`
+    impl_KSI_CMT_RMV `Windows Server implements KSI-CMT-RMV by setting registry value '\\*\NETLOGON,\\*\SYSVOL' (REG_SZ) under 'HKLM\SOFTWARE\Policies\Microsoft\Windows\NetworkProvider\HardenedPaths' to the STIG-required value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match. Remediation sets the value via Group Policy or direct registry edit.`
+    impl_KSI_MLA_EVC `Windows Server implements KSI-MLA-EVC by setting registry value '\\*\NETLOGON,\\*\SYSVOL' (REG_SZ) under 'HKLM\SOFTWARE\Policies\Microsoft\Windows\NetworkProvider\HardenedPaths' to the STIG-required value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match. Remediation sets the value via Group Policy or direct registry edit.`
+    impl_KSI_SVC_ACM `Windows Server implements KSI-SVC-ACM by setting registry value '\\*\NETLOGON,\\*\SYSVOL' (REG_SZ) under 'HKLM\SOFTWARE\Policies\Microsoft\Windows\NetworkProvider\HardenedPaths' to the STIG-required value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match. Remediation sets the value via Group Policy or direct registry edit.`
+    impl_CM_6 `Windows Server implements CM-6 by setting registry value '\\*\NETLOGON,\\*\SYSVOL' (REG_SZ) under 'HKLM\SOFTWARE\Policies\Microsoft\Windows\NetworkProvider\HardenedPaths' to the STIG-required value. The ESP scanner reads the value via the registry CTN and fails the policy if the key is absent or the value does not match. Remediation sets the value via Group Policy or direct registry edit.`
+
+META_END
+
+DEF
+    OBJECT target_1
+        hive `HKEY_LOCAL_MACHINE`
+        key `SOFTWARE\Policies\Microsoft\Windows\NetworkProvider\HardenedPaths`
+        name `\\*\NETLOGON`
+    OBJECT_END
+
+    OBJECT target_2
+        hive `HKEY_LOCAL_MACHINE`
+        key `SOFTWARE\Policies\Microsoft\Windows\NetworkProvider\HardenedPaths`
+        name `\\*\SYSVOL`
+    OBJECT_END
+
+    STATE compliant
+        exists boolean = true
+        value string = `RequireMutualAuthentication=1, RequireIntegrity=1`
+    STATE_END
+
+    CRI AND
+        CTN registry
+            TEST all all AND
+            STATE_REF compliant
+            OBJECT_REF target_1
+        CTN_END
+        CTN registry
+            TEST all all AND
+            STATE_REF compliant
+            OBJECT_REF target_2
+        CTN_END
+    CRI_END
+DEF_END

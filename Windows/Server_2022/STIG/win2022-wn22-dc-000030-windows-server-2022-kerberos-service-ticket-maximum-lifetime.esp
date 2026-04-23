@@ -1,0 +1,58 @@
+# WN22-DC-000030: Windows Server 2022 Kerberos service ticket maximum lifetime must be limited to 600 minutes or less.
+# Source: Windows Server 2022 STIG r8
+# Severity: medium
+# Generated from 01-extract/output/windows-server-2022-stig-r8-controls.json
+
+META
+    esp_id `win2022-wn22-dc-000030-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `windows`
+    criticality `high`
+
+    title `Windows Server 2022 Kerberos service ticket maximum lifetime must be limited to 600 minutes or less.`
+    description `This setting determines the maximum amount of time (in minutes) that a granted session ticket can be used to access a particular service. Session tickets are used only to authenticate new connections with servers. Ongoing operations are not interrupted if the session ticket used to authenticate the connection expires during the connection. Satisfies: SRG-OS-000112-GPOS-00057, SRG-OS-000113-GPOS-00058`
+    author `scanset-security`
+    tags `windows,server-2022,stig,medium,kerberos-policy,security-policy,ksi-iam-apm,ksi-iam-mfa`
+
+    control_mapping `KSI:KSI-IAM-APM,KSI:KSI-IAM-MFA,NIST-800-53:IA-2(8)`
+    control_objective `KSI-IAM-APM,KSI-IAM-MFA`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `Windows:server-2022:endpoint`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Configure the policy value in the Default Domain Policy for Computer Configuration >> Policies >> Windows Settings >> Security Settings >> Account Policies >> Kerberos Policy >> Maximum lifetime for service ticket to a maximum of "600" minutes, but not "0", which equates to "Ticket doesn't expire".`
+
+    component_id `comp-windows-security-policy`
+
+    impl_KSI_IAM_APM `Windows Server implements KSI-IAM-APM by enforcing MaxServiceAge per the STIG (Kerberos service ticket maximum lifetime must be 1-600 minutes.). The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
+    impl_KSI_IAM_MFA `Windows Server implements KSI-IAM-MFA by enforcing MaxServiceAge per the STIG (Kerberos service ticket maximum lifetime must be 1-600 minutes.). The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
+    impl_IA_2_8 `Windows Server implements IA-2(8) by enforcing MaxServiceAge per the STIG (Kerberos service ticket maximum lifetime must be 1-600 minutes.). The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
+
+META_END
+
+DEF
+    OBJECT target
+        policy_name `MaxServiceAge`
+    OBJECT_END
+
+    STATE compliant
+        exists boolean = true
+        value_int int >= 1
+        value_int int <= 600
+    STATE_END
+
+    CRI AND
+        CTN windows_security_policy
+            TEST all all AND
+            STATE_REF compliant
+            OBJECT_REF target
+        CTN_END
+    CRI_END
+DEF_END
