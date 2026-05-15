@@ -1,0 +1,57 @@
+# CMMC L1 / NIST 800-171 3.1.1 - Limit access to authorized users
+# Platform: M365 (Entra ID)
+# Check type: m365_graph_query against /users
+
+META
+    esp_id `cmmc-l1-3-1-1-m365-authorized-accounts-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `m365`
+    criticality `high`
+
+    title `CMMC L1 AC.L1-3.1.1: Limit information system access to authorized users`
+    description `Validates that all Entra ID user accounts are personalized (have a userPrincipalName) and have a recognized userType (Member or Guest). No shared, anonymous, or default-credential accounts may exist in the directory.`
+    author `scanset-security`
+    tags `m365,cmmc-l1,nist-800-171,3-1-1,ac,access-control,user-identification`
+
+    control_mapping `NIST-800-171:3.1.1`
+    control_objective `3.1.1`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `M365:tenant:identity-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Audit /users for any account without a userPrincipalName or with an unrecognized userType. Replace any shared or anonymous accounts with named per-user identities.`
+
+    component_id `comp-m365-identity`
+
+    impl_3_1_1 `Information system access is limited to authorized users via the identity provider. Every directory account is personalized with a unique userPrincipalName, allowing each authentication and authorization decision to attribute to a specific principal. No shared, anonymous, or generic-credential accounts are present; every user is classified as either Member (internal) or Guest (external invited), enabling per-class policy application. Account lifecycle (provisioning, modification, deactivation) is administered through tenant administration interfaces with full audit logging.`
+
+META_END
+
+DEF
+    OBJECT all_users
+        path `users`
+    OBJECT_END
+
+    STATE all_users_personalized
+        found boolean = true
+        record
+            field rows.*.userPrincipalName string contains `@`
+            field rows.*.userType string != ``
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN m365_graph_query
+            TEST all all AND
+            STATE_REF all_users_personalized
+            OBJECT_REF all_users
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,0 +1,57 @@
+# CMMC L1 / NIST 800-171 3.14.4 - Update malicious code protection mechanisms
+# Platform: M365 (Microsoft Secure Score)
+# Check type: m365_graph_query against /security/secureScores
+
+META
+    esp_id `cmmc-l1-3-14-4-m365-av-updates-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `m365`
+    criticality `medium`
+
+    title `CMMC L1 SI.L1-3.14.4: Update malicious code protection mechanisms`
+    description `Validates that a Microsoft Secure Score reading exists for the tenant. Secure Score continuously evaluates the freshness and configuration of malicious-code-protection components and is the tenant-wide measurement of update posture for those mechanisms.`
+    author `scanset-security`
+    tags `m365,cmmc-l1,nist-800-171,3-14-4,si,av-updates,secure-score`
+
+    control_mapping `NIST-800-171:3.14.4`
+    control_objective `3.14.4`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `M365:tenant:security-posture`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Ensure the tenant is generating a Secure Score reading and that the SPN has SecurityEvents.Read.All scope to retrieve it. Review the Secure Score control evaluations periodically for malicious-code-protection items below threshold and remediate.`
+
+    component_id `comp-m365-security-posture`
+
+    impl_3_14_4 `Malicious-code-protection mechanisms are kept current through centrally managed signature and engine updates delivered by the antimalware vendor and tracked tenant-wide via the security posture measurement system. The security posture reading exposes per-control evaluations including signature freshness, real-time-protection enablement, and engine version currency; declining scores on these items trigger administrative review and corrective action. The measurement runs continuously rather than at fixed intervals, ensuring lapses in update delivery surface promptly.`
+
+META_END
+
+DEF
+    OBJECT secure_score
+        path `security/secureScores`
+    OBJECT_END
+
+    STATE secure_score_present
+        found boolean = true
+        record
+            field rows.*.currentScore int >= 0 at_least_one
+            field rows.*.maxScore int > 0 at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN m365_graph_query
+            TEST all all AND
+            STATE_REF secure_score_present
+            OBJECT_REF secure_score
+        CTN_END
+    CRI_END
+DEF_END

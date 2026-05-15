@@ -1,5 +1,5 @@
 # KSI-SCR-MON / KSI-PIY-RVD: Automated Vulnerability and Sensitive Data Monitoring
-# Validates that ScanSet automatically monitors for vulnerabilities and
+# Validates that ExampleOrg automatically monitors for vulnerabilities and
 # sensitive data exposure using Inspector2 and Macie2:
 # - Inspector2: EC2 and ECR scanning active, network scan active
 # - Macie2: session enabled, classification job scanning the security findings bucket

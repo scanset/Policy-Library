@@ -1,5 +1,5 @@
 # KSI-SVC-VRI: Validating Resource Integrity
-# Validates that ScanSet enforces tamper-evident integrity controls on
+# Validates that ExampleOrg enforces tamper-evident integrity controls on
 # backup infrastructure:
 # - Backup vault WORM lock prevents recovery point modification or deletion
 # - Vault KMS encryption ensures backup data confidentiality at rest

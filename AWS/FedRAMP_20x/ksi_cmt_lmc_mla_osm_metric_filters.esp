@@ -44,7 +44,7 @@ META_END
 DEF
     VAR aws_region string `us-east-1`
     VAR cloudtrail_log_group string `/example-org/cloudtrail`
-    VAR metric_namespace string `ScanSet/Security`
+    VAR metric_namespace string `ExampleOrg/Security`
 
     # Metric filter objects
     OBJECT root_login_filter

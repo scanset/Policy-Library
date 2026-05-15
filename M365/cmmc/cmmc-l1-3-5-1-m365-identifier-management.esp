@@ -1,0 +1,57 @@
+# CMMC L1 / NIST 800-171 3.5.1 - Identify users, processes, and devices
+# Platform: M365 (Entra ID)
+# Check type: m365_graph_query against /users
+
+META
+    esp_id `cmmc-l1-3-5-1-m365-identifier-management-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `m365`
+    criticality `high`
+
+    title `CMMC L1 IA.L1-3.5.1: Identify information system users`
+    description `Validates that every directory account holds a unique, non-empty userPrincipalName, providing a stable identifier for authentication, authorization, and audit attribution.`
+    author `scanset-security`
+    tags `m365,cmmc-l1,nist-800-171,3-5-1,ia,identifier-management`
+
+    control_mapping `NIST-800-171:3.5.1`
+    control_objective `3.5.1`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `M365:tenant:identity-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Audit /users to confirm every account holds a non-empty userPrincipalName. Investigate any account presenting without a UPN as it likely indicates a synchronization or provisioning fault.`
+
+    component_id `comp-m365-identity`
+
+    impl_3_5_1 `Information system users are identified by a unique userPrincipalName issued and managed by the identity provider. The userPrincipalName is the stable identifier referenced by authentication, authorization, role assignment, and audit subsystems, ensuring every action in the system is attributable to a specific named principal. Identifier uniqueness is enforced by the directory at provisioning time; reuse is prevented across the account lifecycle.`
+
+META_END
+
+DEF
+    OBJECT all_users
+        path `users`
+    OBJECT_END
+
+    STATE all_users_have_upn
+        found boolean = true
+        record
+            field rows.*.userPrincipalName string contains `@`
+            field rows.*.id string != ``
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN m365_graph_query
+            TEST all all AND
+            STATE_REF all_users_have_upn
+            OBJECT_REF all_users
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,0 +1,66 @@
+# CMMC L1 / NIST 800-171 3.13.1 - NSG boundary firewall posture
+# Platform: Azure
+# Check type: az_nsg, boolean rollups on inbound rule disposition
+
+META
+    esp_id `cmmc-l1-3-13-1-az-nsg-boundary-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `critical`
+
+    category `asset_list`
+    target_asset_type `Microsoft.Network/networkSecurityGroups`
+
+    title `CMMC L1 SC.L1-3.13.1: NSG boundary firewall denies SSH/RDP from Internet`
+    description `Validates that the Network Security Group attached to in-scope resources does NOT have a rule allowing SSH (port 22) or RDP (port 3389) inbound from the Internet. Administrative access uses JIT (Defender for Servers) which opens 22 on-demand; the standing NSG posture is default-deny. The boolean rollups from az_nsg encode this directly.`
+    author `scanset-security`
+    tags `azure,cmmc-l1,nist-800-171,3-13-1,sc,communications-boundary,nsg,jit`
+
+    control_mapping `NIST-800-171:3.13.1`
+    control_objective `3.13.1`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    inherited_from `Azure:subscription:network-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Remove any standing NSG rule allowing 0.0.0.0/0 to port 22 or 3389. Use Defender for Servers JIT VM Access to open management ports on demand instead. Verify the NSG is attached to either a subnet or a NIC.`
+
+    component_id `comp-azure-network`
+
+    impl_3_13_1 `Organizational communications at the Azure boundary are controlled by Network Security Groups attached to subnets and NICs. The NSGs default-deny inbound on management ports; administrative access uses just-in-time controls that open the management port on operator request, scoped to a specific source address and bounded by a time window. The NSG inventory carries boolean rollups for the high-risk dispositions, allowing audit to confirm at scan time that no standing administrative-port exposure exists.`
+
+META_END
+
+DEF
+    # Replace the OBJECT below with one entry per NSG you want this
+    # policy to evaluate. Substitute your NSG name and resource group.
+    SET nsgs union
+        OBJECT example_nsg
+            name `nsg-example`
+            resource_group `rg-example`
+        OBJECT_END
+    SET_END
+
+    STATE st_boundary_locked
+        found boolean = true
+        provisioning_state string = `Succeeded`
+        has_ssh_open_to_internet boolean = false
+        has_rdp_open_to_internet boolean = false
+        has_all_ports_open_to_internet boolean = false
+        is_attached boolean = true
+    STATE_END
+
+    CRI AND
+        CTN az_nsg
+            TEST all all AND
+            STATE_REF st_boundary_locked
+            SET_REF nsgs
+        CTN_END
+    CRI_END
+DEF_END

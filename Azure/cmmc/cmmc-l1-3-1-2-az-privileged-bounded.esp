@@ -1,0 +1,68 @@
+# CMMC L1 / NIST 800-171 3.1.2 - Privileged role count bounded at subscription scope
+# Platform: Azure
+# Check type: az_role_assignment_list, record check on the roles array
+
+META
+    esp_id `cmmc-l1-3-1-2-az-privileged-bounded-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    category `asset_list`
+    target_asset_type `Microsoft.Resources/subscriptions`
+
+    title `CMMC L1 AC.L1-3.1.2: Privileged Azure role assignments are bounded`
+    description `Validates that the count of Owner and User Access Administrator assignments at subscription scope is bounded, demonstrating least-privilege at the highest blast-radius role tier. The check uses an inclusive upper bound rather than equality to allow for documented breakglass + primary admin pairing.`
+    author `scanset-security`
+    tags `azure,cmmc-l1,nist-800-171,3-1-2,ac,privileged-access,least-privilege`
+
+    control_mapping `NIST-800-171:3.1.2`
+    control_objective `3.1.2`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    inherited_from `Azure:subscription:rbac-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Audit subscription-scope role assignments for the Owner and User Access Administrator roles. Remove unnecessary assignments to enforce least-privilege; retain only the minimum needed for primary administration plus a sealed breakglass account.`
+
+    component_id `comp-azure-rbac`
+
+    impl_3_1_2 `Privileged operations on the Azure subscription are bounded by a small number of role assignments at the highest-impact tiers. The count of principals carrying Owner or User Access Administrator at subscription scope is monitored against a defined upper bound. Routine administrative work runs through less privileged roles assigned at narrower scopes (resource group or resource), keeping standing privileged grants restricted to identified administrators only.`
+
+META_END
+
+DEF
+    # Replace the OBJECT below with one entry per Azure subscription you
+    # want this policy to evaluate.
+    SET subscriptions union
+        OBJECT example_subscription
+            name `ExampleSubscription`
+            scope `subscription`
+            subscription `00000000-0000-0000-0000-000000000000`
+        OBJECT_END
+    SET_END
+
+    # Owner + User Access Administrator combined count must not exceed 4.
+    # Tunable in tfvars-equivalent: bump if the operator footprint grows
+    # past a single primary admin + sealed breakglass + on-call pair.
+    STATE privileged_count_bounded
+        found boolean = true
+        record
+            field roles.*.role_definition_name string = `Owner` at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN az_role_assignment_list
+            TEST all all AND
+            STATE_REF privileged_count_bounded
+            SET_REF subscriptions
+        CTN_END
+    CRI_END
+DEF_END

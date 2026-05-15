@@ -1,5 +1,5 @@
 # KSI-SVC-EIS: Evaluating and Improving Security
-# Validates that ScanSet persistently evaluates information resources
+# Validates that ExampleOrg persistently evaluates information resources
 # for security improvement opportunities:
 # - Security Hub: auto-enable controls, FSBP and NIST 800-53 standards active
 # - GuardDuty: RDS login events and runtime monitoring features reflect evaluated posture

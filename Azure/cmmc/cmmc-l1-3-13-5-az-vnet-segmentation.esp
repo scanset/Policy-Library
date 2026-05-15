@@ -1,0 +1,64 @@
+# CMMC L1 / NIST 800-171 3.13.5 - VNet segmentation primitives
+# Platform: Azure
+# Check type: az_virtual_network, boolean rollups for subnet + NSG attachment
+
+META
+    esp_id `cmmc-l1-3-13-5-az-vnet-segmentation-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    category `asset_list`
+    target_asset_type `Microsoft.Network/virtualNetworks`
+
+    title `CMMC L1 SC.L1-3.13.5: Azure VNet uses subnet segmentation with NSG attachment`
+    description `Validates that the Azure Virtual Network has subnets defined and that every subnet has an NSG attached. The subnet primitive is the Azure analog of network segmentation for publicly accessible components; the NSG-per-subnet rule ensures every isolation boundary is enforced rather than implicit.`
+    author `scanset-security`
+    tags `azure,cmmc-l1,nist-800-171,3-13-5,sc,vnet,subnet-segmentation`
+
+    control_mapping `NIST-800-171:3.13.5`
+    control_objective `3.13.5`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    inherited_from `Azure:subscription:network-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Ensure every subnet in the VNet has an NSG attached. Maintain at least one subnet per trust tier; do not consolidate workloads of different sensitivity into a single subnet.`
+
+    component_id `comp-azure-network`
+
+    impl_3_13_5 `Publicly accessible components are logically separated from internal components by Azure VNet subnets. The VNet is partitioned into subnets representing trust tiers; each subnet has a Network Security Group attached, ensuring traffic at every isolation boundary is subject to explicit allow-list rules rather than open by default. This satisfies the practice intent of subnetworks for publicly accessible components by making the boundary mechanism present and enforced at the network layer.`
+
+META_END
+
+DEF
+    # Replace the OBJECT below with one entry per VNet you want this
+    # policy to evaluate. Substitute your VNet name and resource group.
+    SET vnets union
+        OBJECT example_vnet
+            name `vnet-example`
+            resource_group `rg-example`
+        OBJECT_END
+    SET_END
+
+    STATE st_vnet_segmented
+        found boolean = true
+        provisioning_state string = `Succeeded`
+        has_subnets boolean = true
+        all_subnets_have_nsg boolean = true
+    STATE_END
+
+    CRI AND
+        CTN az_virtual_network
+            TEST all all AND
+            STATE_REF st_vnet_segmented
+            SET_REF vnets
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,6 +1,8 @@
 # KSI-CNA-RNT / KSI-SVC-SNT / KSI-CNA-DFP: Network Traffic Restriction
-# Validates that the ScanSet VM security group enforces least-privilege
-# network access:
+# Validates that an EC2 workload's security group enforces least-privilege
+# network access. The specific ports below are an example deployment
+# (HTTPS frontend + application TLS + control-plane gRPC); substitute
+# your own ports for your workload.
 # - Ingress: only ports 443, 3443, 50051 from VPC CIDR
 # - No ingress from 0.0.0.0/0
 # - Egress: only 443, 80, 53
@@ -14,7 +16,7 @@ META
     criticality `critical`
 
     title `KSI-CNA-RNT / KSI-SVC-SNT / KSI-CNA-DFP: Network Traffic Restriction`
-    description `Validates the ScanSet VM security group restricts ingress to required ports from VPC CIDR only with no open internet access`
+    description `Validates the workload VM security group restricts ingress to required ports from VPC CIDR only with no open internet access`
     author `example-security`
     tags `aws,security-group,network,ingress,egress,fedramp,KSI-CNA-RNT,KSI-SVC-SNT,KSI-CNA-DFP`
 
@@ -34,11 +36,11 @@ META
 
     component_id `comp-aws-compute`
 
-    impl_KSI_CNA_RNT `Network traffic restriction is validated by confirming the VM security group (example-org-vm-sg) has no ingress rules allowing traffic from 0.0.0.0/0 (has_ingress_from_anywhere = false). The ingress rule count is validated to confirm only the three required ports are open: 443 (HTTPS), 3443 (ScanSet server), and 50051 (gRPC orchestrator). All ingress is scoped to the VPC CIDR, ensuring no direct internet inbound path exists to the instance.`
+    impl_KSI_CNA_RNT `Network traffic restriction is validated by confirming the workload VM security group (example-org-vm-sg) has no ingress rules allowing traffic from 0.0.0.0/0 (has_ingress_from_anywhere = false). The ingress rule count is validated to confirm only the three required ports are open: 443 (HTTPS frontend), 3443 (application TLS), and 50051 (control-plane gRPC). All ingress is scoped to the VPC CIDR, ensuring no direct internet inbound path exists to the instance.`
 
     impl_KSI_SVC_SNT `Network traffic security is validated by confirming ingress is restricted to TLS-capable ports only (443, 3443) and the gRPC port (50051), all sourced from the VPC CIDR. Egress is limited to ports 443 (HTTPS), 80 (HTTP for package mirrors), and 53 (DNS). The instance has no public IP (validated separately in the instance hardening policy), ensuring all traffic traverses the VPC boundary without direct internet exposure.`
 
-    impl_KSI_CNA_DFP `Functionality and privilege definition at the network layer is validated by confirming the security group enforces exactly the ports required for ScanSet operation: port 443 for HTTPS dashboard and API, port 3443 for mTLS daemon communication, and port 50051 for gRPC orchestrator connectivity. The ingress_rule_count = 3 confirms no additional unauthorized ports have been opened beyond the documented baseline.`
+    impl_KSI_CNA_DFP `Functionality and privilege definition at the network layer is validated by confirming the security group enforces exactly the ports required for the workload: port 443 for HTTPS dashboard and API, port 3443 for mTLS daemon communication, and port 50051 for gRPC control-plane connectivity. The ingress_rule_count = 3 confirms no additional unauthorized ports have been opened beyond the documented baseline.`
 
 META_END
 

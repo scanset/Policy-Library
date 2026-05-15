@@ -1,0 +1,58 @@
+# CMMC L1 / NIST 800-171 3.1.22 - Control public information posting
+# Platform: M365 (Entra ID + SharePoint Online)
+# Check type: m365_graph_query against /informationProtection/policy/labels (beta)
+
+META
+    esp_id `cmmc-l1-3-1-22-m365-public-info-control-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `m365`
+    criticality `high`
+
+    title `CMMC L1 AC.L1-3.1.22: Control information posted on publicly accessible systems`
+    description `Validates that a sensitivity-label taxonomy exists with at least one label that restricts external sharing. Sensitivity labels are the enforcement primitive Microsoft 365 uses to gate what content can be posted, shared, or accessed externally.`
+    author `scanset-security`
+    tags `m365,cmmc-l1,nist-800-171,3-1-22,ac,sensitivity-labels,public-information`
+
+    control_mapping `NIST-800-171:3.1.22`
+    control_objective `3.1.22`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `M365:tenant:purview-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Publish a sensitivity-label taxonomy that classifies content and applies sharing restrictions on labeled items. At least one label must restrict external access. Apply labels to SharePoint sites and Microsoft 365 groups that handle restricted information.`
+
+    component_id `comp-m365-purview`
+
+    impl_3_1_22 `Information posted on or processed by publicly accessible system components is controlled by a sensitivity-label taxonomy. Labels classify content by sensitivity tier and apply protection actions such as restricting access to internal recipients, blocking external sharing, and enforcing encryption-at-rest. Restricted labels are applied to SharePoint sites and Microsoft 365 groups handling sensitive content, ensuring information lifecycle controls travel with the content rather than depending on per-site configuration. Public content that does not receive restrictive labeling is identifiable as such by the absence of the restrictive label, supporting audit defensibility.`
+
+META_END
+
+DEF
+    OBJECT sensitivity_labels
+        path `informationProtection/policy/labels`
+        api_version `beta`
+    OBJECT_END
+
+    STATE label_taxonomy_published
+        found boolean = true
+        record
+            field rows.*.id string != `` at_least_one
+            field rows.*.displayName string != `` at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN m365_graph_query
+            TEST all all AND
+            STATE_REF label_taxonomy_published
+            OBJECT_REF sensitivity_labels
+        CTN_END
+    CRI_END
+DEF_END

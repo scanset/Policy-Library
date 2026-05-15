@@ -1,5 +1,5 @@
 # KSI-MLA: Security Monitoring and Event Management
-# Validates that ScanSet operates a compliant SIEM capability:
+# Validates that ExampleOrg operates a compliant SIEM capability:
 # - GuardDuty: enabled, required features active, publishing findings to encrypted S3
 # - SecurityHub: enabled, FSBP and NIST 800-53 standards active, cross-region aggregation
 # - Security findings S3 bucket: encrypted, versioned, SSL-enforced, tamper-resistant

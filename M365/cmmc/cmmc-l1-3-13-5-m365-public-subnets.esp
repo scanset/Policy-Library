@@ -1,0 +1,57 @@
+# CMMC L1 / NIST 800-171 3.13.5 - Implement subnetworks for publicly accessible components
+# Platform: M365 (SharePoint Online)
+# Check type: m365_graph_query against /sites
+
+META
+    esp_id `cmmc-l1-3-13-5-m365-public-subnets-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `m365`
+    criticality `medium`
+
+    title `CMMC L1 SC.L1-3.13.5: Subnetworks for publicly accessible components`
+    description `Validates that the SharePoint collaboration surface is enumerable and constitutes a controlled boundary distinct from publicly accessible content. The Microsoft 365 collaboration tier is the analog of the practice's network-subnet concept - public-facing surfaces are logically separated from internal collaboration spaces.`
+    author `scanset-security`
+    tags `m365,cmmc-l1,nist-800-171,3-13-5,sc,public-subnets,sharepoint`
+
+    control_mapping `NIST-800-171:3.13.5`
+    control_objective `3.13.5`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `M365:tenant:collaboration-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Maintain the SharePoint collaboration surface as a controlled boundary. Apply restrictive sensitivity labels to sites containing internal-only or sensitive content. Public-facing content should reside on dedicated sites separate from internal-only collaboration spaces.`
+
+    component_id `comp-m365-collaboration`
+
+    impl_3_13_5 `Publicly accessible system components are logically separated from internal organizational content through the SharePoint collaboration tier boundary. Internal content resides in sites and Microsoft 365 groups protected by sensitivity labels that restrict external access and enforce content classification. Public-facing content, where present, is segregated to dedicated sites where the absence of restrictive labeling is intentional and documented. The collaboration surface is enumerable for audit and inventory purposes, ensuring the boundary remains demonstrable.`
+
+META_END
+
+DEF
+    OBJECT all_sites
+        path `sites?search=*`
+    OBJECT_END
+
+    STATE collaboration_surface_enumerable
+        found boolean = true
+        record
+            field rows.*.webUrl string contains `https://` at_least_one
+            field rows.*.id string != `` at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN m365_graph_query
+            TEST all all AND
+            STATE_REF collaboration_surface_enumerable
+            OBJECT_REF all_sites
+        CTN_END
+    CRI_END
+DEF_END

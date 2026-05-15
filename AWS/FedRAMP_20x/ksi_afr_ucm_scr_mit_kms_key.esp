@@ -1,5 +1,5 @@
 # KSI-AFR-UCM / KSI-SCR-MIT / KSI-IAM-ELP: KMS Key Cryptographic Controls
-# Validates that the ScanSet KMS CMK uses approved cryptographic modules
+# Validates that the ExampleOrg KMS CMK uses approved cryptographic modules
 # with automatic rotation and a least-privilege key policy:
 # - Key: enabled, CUSTOMER managed, SYMMETRIC_DEFAULT, AWS_KMS origin
 # - Rotation: enabled, period <= 90 days
@@ -13,7 +13,7 @@ META
     criticality `high`
 
     title `KSI-AFR-UCM / KSI-SCR-MIT / KSI-IAM-ELP: KMS Key Cryptographic Controls`
-    description `Validates the ScanSet KMS CMK is enabled with automatic rotation and a least-privilege key policy scoped to specific service principals`
+    description `Validates the ExampleOrg KMS CMK is enabled with automatic rotation and a least-privilege key policy scoped to specific service principals`
     author `example-security`
     tags `aws,kms,rotation,key-policy,cryptography,fedramp,KSI-AFR-UCM,KSI-SCR-MIT,KSI-IAM-ELP`
 

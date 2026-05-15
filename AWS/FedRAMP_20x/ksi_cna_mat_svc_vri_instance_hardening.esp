@@ -1,5 +1,5 @@
 # KSI-CNA-MAT / KSI-SVC-VRI / KSI-CNA-IBP: Instance Hardening and Volume Encryption
-# Validates that the ScanSet EC2 instance and its attached volumes are
+# Validates that an example EC2 workload and its attached volumes are
 # hardened at the cloud infrastructure layer:
 # - Instance: IMDSv2 required, hop limit = 1, no public IP, UEFI boot
 # - Root volume: KMS encrypted, gp3

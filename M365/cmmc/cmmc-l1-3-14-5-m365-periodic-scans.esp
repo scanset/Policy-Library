@@ -1,0 +1,58 @@
+# CMMC L1 / NIST 800-171 3.14.5 - Periodic scans + real-time file scans
+# Platform: M365 (Intune managed devices)
+# Check type: m365_graph_query against /deviceManagement/managedDevices
+
+META
+    esp_id `cmmc-l1-3-14-5-m365-periodic-scans-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `m365`
+    criticality `high`
+
+    title `CMMC L1 SI.L1-3.14.5: Periodic scans and real-time scans of files`
+    description `Validates that managed devices are reporting active compliance state, demonstrating that the device management plane is continuously evaluating endpoint posture. Compliance evaluation drives both scheduled scans and real-time protection enforcement via Intune compliance policy.`
+    author `scanset-security`
+    tags `m365,cmmc-l1,nist-800-171,3-14-5,si,periodic-scans,real-time,managed-devices`
+
+    control_mapping `NIST-800-171:3.14.5`
+    control_objective `3.14.5`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `M365:tenant:endpoint-management`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Ensure every managed device reports a compliance state and recent lastSyncDateTime. The compliance policy assigned to devices must include real-time protection and scheduled scanning requirements; devices failing this policy block resource access via Conditional Access.`
+
+    component_id `comp-m365-endpoint`
+
+    impl_3_14_5 `Endpoints perform real-time and periodic file scans under the antimalware solution required by device compliance policy. Real-time protection is required for device-compliance evaluation; periodic scans complement real-time protection by inspecting at-rest content. The device management plane evaluates compliance on a recurring sync interval, ensuring lapses in scan coverage are detected and surfaced for remediation. Conditional Access uses the compliance result as a precondition for resource access, ensuring endpoints with disabled scanning cannot access organizational content.`
+
+META_END
+
+DEF
+    OBJECT managed_devices
+        path `deviceManagement/managedDevices`
+    OBJECT_END
+
+    STATE devices_actively_evaluated
+        found boolean = true
+        record
+            field rows.*.complianceState string != `` at_least_one
+            field rows.*.lastSyncDateTime string != `` at_least_one
+            field rows.*.managementAgent string != `` at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN m365_graph_query
+            TEST all all AND
+            STATE_REF devices_actively_evaluated
+            OBJECT_REF managed_devices
+        CTN_END
+    CRI_END
+DEF_END

@@ -1,5 +1,5 @@
 # KSI-AFR-UCM: Using Cryptographic Modules
-# Validates that ScanSet uses approved cryptographic modules to protect
+# Validates that the workload uses approved cryptographic modules to protect
 # backup data:
 # - Backup vault uses a KMS customer managed key for encryption at rest
 # - Backup plan targets the encrypted vault for all three rule tiers

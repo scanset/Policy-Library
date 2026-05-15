@@ -1,0 +1,57 @@
+# CMMC L1 / NIST 800-171 3.14.2 - Provide protection from malicious code
+# Platform: M365 (Intune compliance policies)
+# Check type: m365_graph_query against /deviceManagement/deviceCompliancePolicies
+
+META
+    esp_id `cmmc-l1-3-14-2-m365-malicious-code-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `m365`
+    criticality `high`
+
+    title `CMMC L1 SI.L1-3.14.2: Provide protection from malicious code`
+    description `Validates that at least one device compliance policy is published. Compliance policies are the mechanism Intune uses to require malicious-code protection (antivirus, real-time scanning, signature freshness) as a precondition for device compliance.`
+    author `scanset-security`
+    tags `m365,cmmc-l1,nist-800-171,3-14-2,si,malicious-code,intune,defender`
+
+    control_mapping `NIST-800-171:3.14.2`
+    control_objective `3.14.2`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `M365:tenant:endpoint-management`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Publish at least one Intune device compliance policy requiring antivirus / Defender enabled and active. The policy must be assigned to in-scope device groups so non-compliant devices fail the compliance evaluation and are blocked from accessing organizational resources via Conditional Access.`
+
+    component_id `comp-m365-endpoint`
+
+    impl_3_14_2 `Endpoints in the boundary are protected from malicious code by a centrally managed antimalware solution whose enabled and active state is enforced by device compliance policy. The compliance policy fails any device that lacks active antimalware protection; Conditional Access then prevents non-compliant devices from accessing organizational resources, creating a hard gate against any endpoint with malware protection disabled or absent. Real-time scanning is included in the compliance requirement, ensuring detection occurs continuously rather than only at scheduled intervals.`
+
+META_END
+
+DEF
+    OBJECT compliance_policies
+        path `deviceManagement/deviceCompliancePolicies`
+    OBJECT_END
+
+    STATE compliance_policy_published
+        found boolean = true
+        record
+            field rows.*.id string != `` at_least_one
+            field rows.*.displayName string != `` at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN m365_graph_query
+            TEST all all AND
+            STATE_REF compliance_policy_published
+            OBJECT_REF compliance_policies
+        CTN_END
+    CRI_END
+DEF_END

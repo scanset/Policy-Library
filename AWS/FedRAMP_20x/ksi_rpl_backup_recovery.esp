@@ -1,5 +1,5 @@
 # KSI-RPL: Backup and Recovery Planning
-# Validates that ScanSet backup infrastructure satisfies recovery planning KSIs:
+# Validates that ExampleOrg backup infrastructure satisfies recovery planning KSIs:
 # - Backup vault: KMS encrypted, WORM locked, min 7-day retention
 # - Backup plan: daily/weekly/monthly rules, cross-region copy, 2555-day max retention
 # - Pre-backup maintenance window: enabled, running daily before backup window

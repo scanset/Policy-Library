@@ -1,0 +1,57 @@
+# CMMC L1 / NIST 800-171 3.1.2 - Limit access to authorized transactions / functions
+# Platform: M365 (Entra ID)
+# Check type: m365_graph_query against directory role assignments
+
+META
+    esp_id `cmmc-l1-3-1-2-m365-rbac-enforcement-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `m365`
+    criticality `high`
+
+    title `CMMC L1 AC.L1-3.1.2: Limit access to authorized transactions and functions`
+    description `Validates that role-based access control is enforced via Entra ID directory role assignments. At least one role assignment must exist linking a principal to a defined role, demonstrating that elevated functions require explicit grant rather than being available to every authenticated user.`
+    author `scanset-security`
+    tags `m365,cmmc-l1,nist-800-171,3-1-2,ac,rbac,role-assignments`
+
+    control_mapping `NIST-800-171:3.1.2`
+    control_objective `3.1.2`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `M365:tenant:identity-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Verify Entra ID directory role assignments exist for privileged operations. Every administrative function must be gated by an explicit role assignment to a named principal; review assignments quarterly for least-privilege.`
+
+    component_id `comp-m365-identity`
+
+    impl_3_1_2 `Access to administrative functions and privileged transactions is gated by role-based access control in the identity provider. Privileged operations require an explicit directory role assignment linking a named principal to a defined role; principals without assignments cannot invoke administrative functions even after authentication. Role definitions specify the permitted scope and operation classes, ensuring users access only the transactions explicitly authorized for their role. Just-in-time elevation is available via privileged access management for higher-impact roles, reducing standing privileged access.`
+
+META_END
+
+DEF
+    OBJECT role_assignments
+        path `roleManagement/directory/roleAssignments`
+    OBJECT_END
+
+    STATE rbac_active
+        found boolean = true
+        record
+            field rows.*.roleDefinitionId string contains `-` at_least_one
+            field rows.*.principalId string != `` at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN m365_graph_query
+            TEST all all AND
+            STATE_REF rbac_active
+            OBJECT_REF role_assignments
+        CTN_END
+    CRI_END
+DEF_END

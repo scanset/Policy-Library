@@ -31,11 +31,11 @@ META
 
     component_id `comp-windows-security-policy`
 
-    impl_KSI_MLA_LET `Windows Server implements KSI-MLA-LET by restricting the SeSecurityPrivilege user right to exactly the SIDs [S-1-5-32-544, scanset-winrm] via the Local Security Policy. The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
-    impl_KSI_MLA_OSM `Windows Server implements KSI-MLA-OSM by restricting the SeSecurityPrivilege user right to exactly the SIDs [S-1-5-32-544, scanset-winrm] via the Local Security Policy. The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
-    impl_AU_12 `Windows Server implements AU-12 by restricting the SeSecurityPrivilege user right to exactly the SIDs [S-1-5-32-544, scanset-winrm] via the Local Security Policy. The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
-    impl_AU_12_3 `Windows Server implements AU-12(3) by restricting the SeSecurityPrivilege user right to exactly the SIDs [S-1-5-32-544, scanset-winrm] via the Local Security Policy. The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
-    impl_AU_9 `Windows Server implements AU-9 by restricting the SeSecurityPrivilege user right to exactly the SIDs [S-1-5-32-544, scanset-winrm] via the Local Security Policy. The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
+    impl_KSI_MLA_LET `Windows Server implements KSI-MLA-LET by restricting the SeSecurityPrivilege user right to exactly the SIDs [S-1-5-32-544, example-winrm-svc] via the Local Security Policy. The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
+    impl_KSI_MLA_OSM `Windows Server implements KSI-MLA-OSM by restricting the SeSecurityPrivilege user right to exactly the SIDs [S-1-5-32-544, example-winrm-svc] via the Local Security Policy. The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
+    impl_AU_12 `Windows Server implements AU-12 by restricting the SeSecurityPrivilege user right to exactly the SIDs [S-1-5-32-544, example-winrm-svc] via the Local Security Policy. The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
+    impl_AU_12_3 `Windows Server implements AU-12(3) by restricting the SeSecurityPrivilege user right to exactly the SIDs [S-1-5-32-544, example-winrm-svc] via the Local Security Policy. The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
+    impl_AU_9 `Windows Server implements AU-9 by restricting the SeSecurityPrivilege user right to exactly the SIDs [S-1-5-32-544, example-winrm-svc] via the Local Security Policy. The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
 
 META_END
 
@@ -58,7 +58,7 @@ DEF
     # documented exception (site-approved)
     STATE has_sid_2
         exists boolean = true
-        value string contains `scanset-winrm`
+        value string contains `example-winrm-svc`
     STATE_END
 
     CRI AND

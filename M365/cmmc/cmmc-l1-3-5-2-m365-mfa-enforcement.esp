@@ -1,0 +1,64 @@
+# CMMC L1 / NIST 800-171 3.5.2 - Authenticate users via MFA
+# Platform: M365 (Entra ID)
+# Check type: m365_graph_query against Conditional Access policies
+
+META
+    esp_id `cmmc-l1-3-5-2-m365-mfa-enforcement-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `m365`
+    criticality `high`
+
+    title `CMMC L1 IA.L1-3.5.2: Authenticate users via MFA Conditional Access`
+    description `Validates that at least one enabled Conditional Access policy enforces multi-factor authentication on user sign-ins. Establishes the MFA gate that satisfies the practice "Authenticate (or verify) the identities of users, processes, or devices, as a prerequisite to allowing access to organizational information systems."`
+    author `scanset-security`
+    tags `m365,cmmc-l1,nist-800-171,3-5-2,ia,mfa,conditional-access`
+
+    control_mapping `NIST-800-171:3.5.2`
+    control_objective `3.5.2`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `M365:tenant:identity-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Configure at least one enabled Conditional Access policy targeting all users with a grant control that requires multi-factor authentication. Verify the policy is in the "On" state and not in report-only mode.`
+
+    component_id `comp-m365-identity`
+
+    impl_3_5_2 `User authentication is enforced via Conditional Access policies in Entra ID. At least one tenant-wide policy is in the enabled (enforced, not report-only) state with a grant control requiring multi-factor authentication for all interactive user sign-ins. The Conditional Access evaluation occurs server-side at the identity provider before any session token is issued, ensuring no user-context access is granted without a successful MFA challenge. Privileged sessions are additionally gated by stronger authenticator categories (phishing-resistant where supported).`
+
+META_END
+
+DEF
+    # --- Objects ---
+    # Enabled CA policies - operator intent for production enforcement.
+    OBJECT enabled_ca_policies
+        path `identity/conditionalAccess/policies`
+        filter `state eq 'enabled'`
+    OBJECT_END
+
+    # --- States ---
+    # At least one enabled policy must require MFA in its grant controls.
+    # The wildcard `at_least_one` is what makes this an OR across policies:
+    # any single policy with mfa in builtInControls satisfies the practice.
+    STATE has_mfa_enforcement
+        found boolean = true
+        record
+            field rows.*.grantControls.builtInControls.* string = `mfa` at_least_one
+        record_end
+    STATE_END
+
+    # --- Criteria ---
+    CRI AND
+        CTN m365_graph_query
+            TEST all all AND
+            STATE_REF has_mfa_enforcement
+            OBJECT_REF enabled_ca_policies
+        CTN_END
+    CRI_END
+DEF_END

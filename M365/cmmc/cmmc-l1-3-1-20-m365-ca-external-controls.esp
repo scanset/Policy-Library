@@ -1,0 +1,73 @@
+# CMMC L1 / NIST 800-171 3.1.20 - Control connections to external information systems
+# Platform: M365 (Entra ID)
+# Check type: m365_graph_query against CA policies + named locations
+
+META
+    esp_id `cmmc-l1-3-1-20-m365-ca-external-controls-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `m365`
+    criticality `high`
+
+    title `CMMC L1 AC.L1-3.1.20: Verify and control connections to external information systems`
+    description `Validates that at least one named location is defined and at least one enabled Conditional Access policy uses location-based conditions. Establishes that the tenant identifies and gates connections originating from external networks.`
+    author `scanset-security`
+    tags `m365,cmmc-l1,nist-800-171,3-1-20,ac,external-connections,conditional-access`
+
+    control_mapping `NIST-800-171:3.1.20`
+    control_objective `3.1.20`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `M365:tenant:identity-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Define at least one named location representing authorized network origins. Configure at least one enabled Conditional Access policy that references those locations to enforce geo-fencing or trusted-network constraints.`
+
+    component_id `comp-m365-identity`
+
+    impl_3_1_20 `Connections originating from external information systems are identified and controlled by named locations referenced from Conditional Access policies. Named locations classify authorized network origins by IP range or country; Conditional Access policies reference those locations as conditions to either allow, block, or apply stronger authentication to sign-ins matching them. The identity provider evaluates these conditions server-side before issuing session tokens, ensuring connections from unauthorized external systems are gated independently of any client-side configuration.`
+
+META_END
+
+DEF
+    OBJECT named_locations
+        path `identity/conditionalAccess/namedLocations`
+    OBJECT_END
+
+    OBJECT enabled_ca_with_locations
+        path `identity/conditionalAccess/policies`
+        filter `state eq 'enabled'`
+    OBJECT_END
+
+    STATE has_named_location
+        found boolean = true
+        record
+            field rows.*.id string != `` at_least_one
+        record_end
+    STATE_END
+
+    STATE has_location_conditional_policy
+        found boolean = true
+        record
+            field rows.*.conditions.locations.includeLocations.* string != `` at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN m365_graph_query
+            TEST all all AND
+            STATE_REF has_named_location
+            OBJECT_REF named_locations
+        CTN_END
+        CTN m365_graph_query
+            TEST all all AND
+            STATE_REF has_location_conditional_policy
+            OBJECT_REF enabled_ca_with_locations
+        CTN_END
+    CRI_END
+DEF_END

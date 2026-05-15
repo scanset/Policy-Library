@@ -1,0 +1,61 @@
+# CMMC L1 / NIST 800-171 3.14.2 - Defender for Servers Plan 2 active
+# Platform: Azure
+# Check type: az_defender_pricing on the VirtualMachines plan
+
+META
+    esp_id `cmmc-l1-3-14-2-az-defender-plan2-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    category `asset_list`
+    target_asset_type `Microsoft.Security/pricings`
+
+    title `CMMC L1 SI.L1-3.14.2: Defender for Servers Plan 2 active at subscription scope`
+    description `Validates that the Defender for Cloud pricing tier for VirtualMachines is Standard with sub_plan P2. Defender for Servers Plan 2 provides anti-malware (MDE for Linux/Windows), vulnerability assessment, file integrity monitoring, and adaptive application controls -- the bundle that operationalizes malicious-code protection on every covered VM in the subscription. The single check satisfies SI.L1-3.14.2 (malicious code protection) and supports SI.L1-3.14.1/4/5 via the Plan 2 inclusions.`
+    author `scanset-security`
+    tags `azure,cmmc-l1,nist-800-171,3-14-2,si,defender-for-cloud,defender-for-servers,plan-2`
+
+    control_mapping `NIST-800-171:3.14.2`
+    control_objective `3.14.2`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    inherited_from `Azure:subscription:defender-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `1`
+    recommendation `Enable Defender for Servers Plan 2 at subscription scope via the Defender for Cloud portal or terraform azurerm_security_center_subscription_pricing. Plan 2 is required for the Linux MDE extension, vulnerability assessment, FIM, and the regulatory compliance dashboard.`
+
+    component_id `comp-azure-defender`
+
+    impl_3_14_2 `Endpoints provisioned in the Azure subscription are protected from malicious code by Defender for Servers Plan 2 enabled at subscription scope. The plan supplies anti-malware via the MDE extension, scheduled and real-time scanning, signature distribution, file integrity monitoring, and vulnerability assessment. The pricing tier is inventoried as a discrete Azure resource so the active state is independently verifiable; absence of Plan 2 is a finding regardless of any specific VM extension state.`
+
+META_END
+
+DEF
+    SET defender_plans union
+        OBJECT virtualmachines
+            name `VirtualMachines`
+        OBJECT_END
+    SET_END
+
+    STATE st_defender_plan2
+        found boolean = true
+        is_enabled boolean = true
+        pricing_tier string = `Standard`
+        sub_plan string = `P2`
+    STATE_END
+
+    CRI AND
+        CTN az_defender_pricing
+            TEST all all AND
+            STATE_REF st_defender_plan2
+            SET_REF defender_plans
+        CTN_END
+    CRI_END
+DEF_END

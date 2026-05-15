@@ -1,5 +1,5 @@
 # KSI-SCR-MON: Supply Chain Risk Monitoring
-# Validates that ScanSet automatically monitors for upstream vulnerabilities:
+# Validates that ExampleOrg automatically monitors for upstream vulnerabilities:
 # - GuardDuty EBS malware protection: enabled, scanning EC2 instance volumes
 # - ECR repository: immutable tags, scan-on-push enabled, encrypted
 
@@ -57,7 +57,7 @@ DEF
     # ==========================================================================
     VAR aws_region string `us-east-1`
     VAR guardduty_detector_id string `00000000000000000000000000000000`
-    VAR tlog_repo_name string `scanset/transparency-log`
+    VAR tlog_repo_name string `example-org/transparency-log`
 
     # ==========================================================================
     # Objects

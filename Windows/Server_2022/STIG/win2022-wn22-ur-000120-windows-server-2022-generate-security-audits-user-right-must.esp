@@ -31,8 +31,8 @@ META
 
     component_id `comp-windows-security-policy`
 
-    impl_KSI_IAM_JIT `Windows Server implements KSI-IAM-JIT by restricting the SeAuditPrivilege user right to exactly the SIDs [S-1-5-19, S-1-5-20, scanset-winrm] via the Local Security Policy. The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
-    impl_AC_6_10 `Windows Server implements AC-6(10) by restricting the SeAuditPrivilege user right to exactly the SIDs [S-1-5-19, S-1-5-20, scanset-winrm] via the Local Security Policy. The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
+    impl_KSI_IAM_JIT `Windows Server implements KSI-IAM-JIT by restricting the SeAuditPrivilege user right to exactly the SIDs [S-1-5-19, S-1-5-20, example-winrm-svc] via the Local Security Policy. The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
+    impl_AC_6_10 `Windows Server implements AC-6(10) by restricting the SeAuditPrivilege user right to exactly the SIDs [S-1-5-19, S-1-5-20, example-winrm-svc] via the Local Security Policy. The ESP scanner queries the policy via the windows_security_policy CTN and fails the policy if the value does not match the STIG-required state. Remediation sets the policy via secedit or Group Policy.`
 
 META_END
 
@@ -61,7 +61,7 @@ DEF
     # documented exception (site-approved)
     STATE has_sid_3
         exists boolean = true
-        value string contains `scanset-winrm`
+        value string contains `example-winrm-svc`
     STATE_END
 
     CRI AND

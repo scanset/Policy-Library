@@ -1,5 +1,5 @@
 # KSI-CNA-ULN / KSI-CNA-MAT: Logical Networking and Attack Surface Minimization
-# Validates that ScanSet uses logical network isolation and VPC endpoints
+# Validates that ExampleOrg uses logical network isolation and VPC endpoints
 # to keep AWS API traffic private:
 # - VPC: non-default, private CIDR, DNS enabled
 # - Critical Interface endpoints: ssm, kms, secretsmanager, logs (private DNS enabled)
@@ -13,7 +13,7 @@ META
     criticality `high`
 
     title `KSI-CNA-ULN / KSI-CNA-MAT: Logical Networking and VPC Endpoint Isolation`
-    description `Validates the ScanSet VPC uses logical network segmentation and VPC endpoints to prevent AWS API traffic from traversing the public internet`
+    description `Validates the ExampleOrg VPC uses logical network segmentation and VPC endpoints to prevent AWS API traffic from traversing the public internet`
     author `example-security`
     tags `aws,vpc,vpc-endpoint,privatelink,fedramp,KSI-CNA-ULN,KSI-CNA-MAT`
 
@@ -33,7 +33,7 @@ META
 
     component_id `comp-aws-network`
 
-    impl_KSI_CNA_ULN `Logical networking is validated by confirming the ScanSet VPC (10.0.0.0/16) is a non-default VPC (is_default = false) with DNS support and DNS hostnames enabled, providing proper internal name resolution within the logical network boundary. The VPC CIDR uses a private RFC 1918 address space, confirming logical isolation from the public internet at the network layer.`
+    impl_KSI_CNA_ULN `Logical networking is validated by confirming the ExampleOrg VPC (10.0.0.0/16) is a non-default VPC (is_default = false) with DNS support and DNS hostnames enabled, providing proper internal name resolution within the logical network boundary. The VPC CIDR uses a private RFC 1918 address space, confirming logical isolation from the public internet at the network layer.`
 
     impl_KSI_CNA_MAT `Attack surface minimization for AWS API communication is validated by confirming four critical Interface VPC endpoints exist with state=available and private_dns_enabled=true: SSM (for maintenance window execution), KMS (for encryption operations), Secrets Manager (for credential retrieval), and CloudWatch Logs (for log delivery). Private DNS ensures that AWS SDK calls to these services resolve to private endpoint IPs within the VPC rather than traversing the public internet. The S3 Gateway endpoint is validated to have at least one route table associated, confirming S3 traffic is routed within the AWS network. Together these confirm that all sensitive AWS API calls - credential retrieval, encryption, log delivery, and instance management - remain within the private network boundary.`
 

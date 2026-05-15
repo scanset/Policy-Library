@@ -1,0 +1,64 @@
+# CMMC L1 / NIST 800-171 3.1.1 - Authorized principals at subscription scope
+# Platform: Azure
+# Check type: az_role_assignment_list across the subscription
+
+META
+    esp_id `cmmc-l1-3-1-1-az-rbac-principals-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `azure`
+    criticality `high`
+
+    category `asset_list`
+    target_asset_type `Microsoft.Resources/subscriptions`
+
+    title `CMMC L1 AC.L1-3.1.1: Authorized principals at Azure subscription scope`
+    description `Validates that the Azure subscription has at least one role assignment recorded, demonstrating that access is gated by explicit RBAC grants rather than being implicit or unrestricted. Complements the M365::User + M365::RoleAssignment evidence already collected for this practice.`
+    author `scanset-security`
+    tags `azure,cmmc-l1,nist-800-171,3-1-1,ac,rbac,subscription-scope`
+
+    control_mapping `NIST-800-171:3.1.1`
+    control_objective `3.1.1`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `cloud-admin`
+
+    control_origination `sp-system`
+    inherited_from `Azure:subscription:rbac-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Verify the subscription has explicit RBAC role assignments at appropriate scopes. Every principal granted access must be a named User, ServicePrincipal, or Group. Investigate any assignment where principal_type is Unknown.`
+
+    component_id `comp-azure-rbac`
+
+    impl_3_1_1 `Access to Azure subscription resources is gated by role-based access control. Every principal granted access is explicitly assigned a defined role at a specific scope; principals without a role assignment cannot invoke management plane operations. Role assignments are inventoried as discrete Azure resources, allowing per-assignment audit. Together with the identity-tier controls in the directory service, this establishes the closed loop of authentication and authorization required for the practice.`
+
+META_END
+
+DEF
+    # Replace the OBJECT below with one entry per Azure subscription you
+    # want this policy to evaluate. The SET body is the part you customize;
+    # everything else (STATE, CRI) stays as-is.
+    SET subscriptions union
+        OBJECT example_subscription
+            name `ExampleSubscription`
+            scope `subscription`
+            subscription `00000000-0000-0000-0000-000000000000`
+        OBJECT_END
+    SET_END
+
+    STATE rbac_has_assignments
+        found boolean = true
+        role_count int >= 1
+    STATE_END
+
+    CRI AND
+        CTN az_role_assignment_list
+            TEST all all AND
+            STATE_REF rbac_has_assignments
+            SET_REF subscriptions
+        CTN_END
+    CRI_END
+DEF_END

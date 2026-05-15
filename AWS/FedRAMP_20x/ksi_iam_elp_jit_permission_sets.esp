@@ -2,9 +2,9 @@
 # Validates that IAM Identity Center is configured with three permission sets
 # that enforce least privilege and time-bounded sessions, and that the
 # corresponding identity store groups exist and map to Entra ID:
-# - ScanSetAdmin: 4-hour session, AdministratorAccess managed policy
-# - ScanSetDeveloper: 8-hour session, scoped inline policy only
-# - ScanSetReadOnly: 2-hour session, ReadOnlyAccess managed policy
+# - ExampleOrgAdmin: 4-hour session, AdministratorAccess managed policy
+# - ExampleOrgDeveloper: 8-hour session, scoped inline policy only
+# - ExampleOrgReadOnly: 2-hour session, ReadOnlyAccess managed policy
 # - Three identity store groups with Entra federation descriptions
 
 META
@@ -50,38 +50,38 @@ DEF
 
     # Permission set objects
     OBJECT admin_ps
-        permission_set_name `ScanSetAdmin`
+        permission_set_name `ExampleOrgAdmin`
         instance_arn VAR instance_arn
         region VAR aws_region
     OBJECT_END
 
     OBJECT developer_ps
-        permission_set_name `ScanSetDeveloper`
+        permission_set_name `ExampleOrgDeveloper`
         instance_arn VAR instance_arn
         region VAR aws_region
     OBJECT_END
 
     OBJECT readonly_ps
-        permission_set_name `ScanSetReadOnly`
+        permission_set_name `ExampleOrgReadOnly`
         instance_arn VAR instance_arn
         region VAR aws_region
     OBJECT_END
 
     # Identity store group objects
     OBJECT admins_group
-        group_name `ScanSetAdmins`
+        group_name `ExampleOrgAdmins`
         identity_store_id VAR identity_store_id
         region VAR aws_region
     OBJECT_END
 
     OBJECT developers_group
-        group_name `ScanSetDevelopers`
+        group_name `ExampleOrgDevelopers`
         identity_store_id VAR identity_store_id
         region VAR aws_region
     OBJECT_END
 
     OBJECT readonly_group
-        group_name `ScanSetReadOnly`
+        group_name `ExampleOrgReadOnly`
         identity_store_id VAR identity_store_id
         region VAR aws_region
     OBJECT_END

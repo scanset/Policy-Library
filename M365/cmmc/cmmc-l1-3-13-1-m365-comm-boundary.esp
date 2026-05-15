@@ -1,0 +1,58 @@
+# CMMC L1 / NIST 800-171 3.13.1 - Monitor and control communications at boundaries
+# Platform: M365 (Entra ID)
+# Check type: m365_graph_query against CA policies for legacy-auth blocking
+
+META
+    esp_id `cmmc-l1-3-13-1-m365-comm-boundary-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `m365`
+    criticality `high`
+
+    title `CMMC L1 SC.L1-3.13.1: Monitor and control communications at external boundaries`
+    description `Validates that at least one enabled Conditional Access policy blocks legacy authentication protocols. Legacy auth bypasses Conditional Access altogether and is a primary external-boundary risk; explicitly blocking it satisfies the practice of controlling communications at the boundary.`
+    author `scanset-security`
+    tags `m365,cmmc-l1,nist-800-171,3-13-1,sc,communications-boundary,legacy-auth`
+
+    control_mapping `NIST-800-171:3.13.1`
+    control_objective `3.13.1`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+
+    control_origination `sp-system`
+    inherited_from `M365:tenant:identity-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Configure at least one enabled Conditional Access policy with conditions.clientAppTypes including legacy protocols (exchangeActiveSync, other) and a grant control of block. This ensures legacy authentication, which bypasses modern security controls, cannot reach tenant resources from the external boundary.`
+
+    component_id `comp-m365-identity`
+
+    impl_3_13_1 `Organizational communications are controlled at the external boundary by Conditional Access policies that block legacy authentication protocols. Modern authentication protocols are subject to multi-factor and conditional-access evaluation; legacy protocols bypass these controls. By explicitly blocking legacy authentication, all incoming communication is forced through the modern authentication pipeline where boundary-monitoring controls apply. Server-side enforcement at the identity provider ensures the block is effective regardless of client behavior.`
+
+META_END
+
+DEF
+    OBJECT enabled_ca_policies
+        path `identity/conditionalAccess/policies`
+        filter `state eq 'enabled'`
+    OBJECT_END
+
+    STATE blocks_legacy_auth
+        found boolean = true
+        record
+            field rows.*.conditions.clientAppTypes.* string = `exchangeActiveSync` at_least_one
+            field rows.*.grantControls.builtInControls.* string = `block` at_least_one
+        record_end
+    STATE_END
+
+    CRI AND
+        CTN m365_graph_query
+            TEST all all AND
+            STATE_REF blocks_legacy_auth
+            OBJECT_REF enabled_ca_policies
+        CTN_END
+    CRI_END
+DEF_END
