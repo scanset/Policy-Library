@@ -1,0 +1,55 @@
+# AWS Storage Services Benchmark v1.0.0
+# 2.4 - Ensure EBS volumes encrypted with KMS
+
+META
+    esp_id `aws-stor-2-4`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `medium`
+    control_mapping `NIST-800-53:AC-18,NIST-800-53:CP-2,KSI:KSI-RPL-ARP`
+    title `2.4 - Ensure EBS volumes encrypted with KMS`
+    description `Verify both root and data EBS volumes are encrypted with customer-managed KMS key.`
+    author `example-security`
+    assessment_method `TEST`
+    implementation_status `implemented`
+    impl_AC_18 `2.4: Ensure EBS volumes encrypted with KMS`
+    impl_CP_2 `2.4: Ensure EBS volumes encrypted with KMS`
+META_END
+
+DEF
+    OBJECT root_volume
+        volume_id `ROOT_VOLUME_ID`
+    OBJECT_END
+
+    OBJECT data_volume
+        volume_id `DATA_VOLUME_ID`
+    OBJECT_END
+
+    STATE root_volume_check
+        found boolean = true
+        encrypted boolean = true
+        volume_type string = `gp3`
+        kms_key_id string contains `KMS_KEY_ID`
+    STATE_END
+
+    STATE data_volume_check
+        found boolean = true
+        encrypted boolean = true
+        volume_type string = `gp3`
+        kms_key_id string contains `KMS_KEY_ID`
+    STATE_END
+
+    CRI AND
+        CTN aws_ebs_volume
+            TEST all all AND
+            STATE_REF root_volume_check
+            OBJECT_REF root_volume
+        CTN_END
+        CTN aws_ebs_volume
+            TEST all all AND
+            STATE_REF data_volume_check
+            OBJECT_REF data_volume
+        CTN_END
+    CRI_END
+DEF_END

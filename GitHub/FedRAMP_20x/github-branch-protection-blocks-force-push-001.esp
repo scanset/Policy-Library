@@ -1,0 +1,75 @@
+# Default branch blocks force-push
+# Platform: GitHub (SDLC::Repository assets)
+# CTN: github_branch_protection
+# Frameworks: KSI-MLA-LET, KSI-SVC-VRI, NIST AU-9, SI-7
+
+META
+    esp_id `github-branch-protection-blocks-force-push-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `github`
+    criticality `high`
+
+    category `asset_list`
+    target_asset_type `SDLC::Repository`
+
+    title `Default branch blocks force-push`
+    description `Validates that the default branch protection rule does NOT allow force pushes. Force-push can rewrite history, bypassing audit trails and breaking forensic reconstructibility of who changed what when.`
+    author `scanset-security`
+    tags `github,sdlc,branch-protection,force-push,ksi-mla-let,ksi-svc-vri,nist-au-9,nist-si-7`
+
+    control_mapping `KSI:KSI-MLA-LET,KSI:KSI-SVC-VRI,NIST-800-53:AU-9,NIST-800-53:SI-7`
+    control_objective `KSI-MLA-LET,KSI-SVC-VRI`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `GitHub:scanset:sdlc-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Settings, Branches, Branch protection rules: ensure "Allow force pushes" is OFF on the default branch rule. The default for new rules is OFF; existing rules where someone explicitly enabled it should be reverted.`
+
+    component_id `comp-github-sdlc`
+
+    impl_KSI_MLA_LET `Logging-and-audit integrity is preserved by preventing destructive history rewrites on the default branch. Force-push permits replacement of the audit trail itself; blocking it ensures every change on the protected branch is reachable via the git log, preserving the "log everything throughout" intent.`
+    impl_KSI_SVC_VRI `Verifiable resource integrity of the default branch HEAD requires that history is append-only. Force-push violates that invariant by allowing the HEAD to be replaced with a divergent commit chain; the protection rules allow_force_pushes.enabled flag must be false.`
+
+META_END
+
+DEF
+    # Default placeholder values, overridden per-asset by PolicySetSync
+    # at bind time. The VARs are pattern-fillers consumed by the template
+    # OBJECT below; on bind, PolicySetSync rewrites the SET body with one
+    # OBJECT per bound asset, each carrying that asset's concrete
+    # owner / repo / branch from inventory.assets.metadata.
+    VAR owner string `_unbound_`
+    VAR repo string `_unbound_`
+    VAR branch string `_unbound_`
+
+    # Bound assets - managed programmatically by PolicySetSync from
+    # inventory.asset_policies (status = active). Do not hand-edit;
+    # the SET body is the only mutable region of this file.
+    SET github_repos union
+        OBJECT repo_target
+            owner VAR owner
+            repo VAR repo
+            branch VAR branch
+        OBJECT_END
+    SET_END
+
+    STATE force_push_blocked
+        found boolean = true
+        protection_exists boolean = true
+        allows_force_pushes boolean = false
+    STATE_END
+
+    CRI AND
+        CTN github_branch_protection
+            TEST all all AND
+            STATE_REF force_push_blocked
+            SET_REF github_repos
+        CTN_END
+    CRI_END
+DEF_END

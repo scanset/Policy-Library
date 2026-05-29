@@ -1,0 +1,68 @@
+# Org restricts who can invite outside collaborators
+# Platform: GitHub (SDLC::Organization assets)
+# CTN: github_org_settings
+# Frameworks: KSI-IAM-ELP, KSI-TPR, NIST AC-3, AC-21
+
+META
+    esp_id `github-org-restricts-outside-collaborators-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `github`
+    criticality `medium`
+
+    category `asset_list`
+    target_asset_type `SDLC::Organization`
+
+    title `Org restricts member invitation of outside collaborators`
+    description `Validates that ordinary org members cannot invite outside collaborators to repositories. Outside-collaborator grants bypass the orgs identity surface entirely and create supply-chain exposure when granted by non-admins.`
+    author `scanset-security`
+    tags `github,org,outside-collaborators,supply-chain,ksi-iam-elp,ksi-tpr,nist-ac-3,nist-ac-21`
+
+    control_mapping `KSI:KSI-IAM-ELP,KSI:KSI-TPR,NIST-800-53:AC-3,NIST-800-53:AC-21`
+    control_objective `KSI-IAM-ELP,KSI-TPR`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `GitHub:scanset:identity-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Settings, Member privileges, "Repository invitations": disable "Allow members to invite outside collaborators to repositories in this org". Outside-collaborator invitations should require an admin.`
+
+    component_id `comp-github-identity`
+
+    impl_KSI_IAM_ELP `Member-level privilege to grant repository access to identities outside the org is removed. Restricting outside-collaborator invitations to admins constrains the blast radius of an individual members account compromise: a compromised non-admin cannot grant a remote attacker a foothold via collaborator invitation.`
+    impl_KSI_TPR `Third-party risk management at the SDLC platform requires that external code-access grants pass through a documented review. Member-initiated collaborator invitations bypass the orgs identity-baseline review and onboarding processes; restricting them to admins ensures every external collaborator has a documented admin sponsor.`
+
+META_END
+
+DEF
+    # Default placeholder value, overridden per-asset by PolicySetSync
+    # at bind time. PolicySetSync rewrites the SET body with one OBJECT
+    # per bound org, each carrying that org's concrete login.
+    VAR login string `_unbound_`
+
+    # Bound assets - managed programmatically by PolicySetSync from
+    # inventory.asset_policies (status = active). Do not hand-edit;
+    # the SET body is the only mutable region of this file.
+    SET github_orgs union
+        OBJECT org_target
+            login VAR login
+        OBJECT_END
+    SET_END
+
+    STATE outside_collab_restricted
+        found boolean = true
+        members_can_invite_outside_collaborators boolean = false
+    STATE_END
+
+    CRI AND
+        CTN github_org_settings
+            TEST all all AND
+            STATE_REF outside_collab_restricted
+            SET_REF github_orgs
+        CTN_END
+    CRI_END
+DEF_END

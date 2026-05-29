@@ -1,6 +1,6 @@
 # KSI-MLA-LET: Azure Activity Log Alert - Policy Assignment Changes
-# CIS Azure 5.2.1: Alert on create/update policy assignment
-# CIS Azure 5.2.2: Alert on delete policy assignment
+# Azure 5.2.1: Alert on create/update policy assignment
+# Azure 5.2.2: Alert on delete policy assignment
 
 META
     esp_id `ksi-mla-let-az-activity-alert-policy-001`
@@ -12,7 +12,7 @@ META
     title `KSI-MLA-LET: Azure Activity Alert - policy assignment write monitored`
     description `Validates that an activity log alert exists and is enabled to detect creation or modification of Azure Policy assignments, ensuring governance changes are tracked and communicated`
     author `security-team`
-    tags `azure,activity-log,alert,policy,governance,CIS-5.2.1`
+    tags `azure,activity-log,alert,policy,governance`
 
     control_mapping `KSI:KSI-MLA-LET,KSI:KSI-CMT-LMC,NIST:AU-12,NIST:SI-4`
     control_objective `KSI-MLA-LET`

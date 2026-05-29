@@ -1,5 +1,5 @@
 # KSI-CNA-EIS: Azure Defender for Servers - Standard Tier Enabled
-# CIS Azure 2.1.1: Ensure Microsoft Defender for Servers is enabled
+# Azure 2.1.1: Ensure Microsoft Defender for Servers is enabled
 
 META
     esp_id `ksi-cna-eis-az-defender-servers-001`
@@ -11,7 +11,7 @@ META
     title `KSI-CNA-EIS: Azure Defender for Servers - Standard tier enabled`
     description `Validates that Microsoft Defender for Servers is enabled at the Standard pricing tier with P2 sub-plan, providing advanced threat protection including vulnerability assessment, adaptive hardening, and just-in-time VM access`
     author `security-team`
-    tags `azure,defender,servers,threat-protection,CIS-2.1.1`
+    tags `azure,defender,servers,threat-protection`
 
     control_mapping `KSI:KSI-CNA-EIS,NIST:SI-4,NIST:RA-5`
     control_objective `KSI-CNA-EIS`

@@ -1,0 +1,75 @@
+# Default branch protection rule enforces admins
+# Platform: GitHub (SDLC::Repository assets)
+# CTN: github_branch_protection
+# Frameworks: KSI-IAM-ELP, NIST AC-6, AC-6(7), CMMC AC.L2-3.1.5
+
+META
+    esp_id `github-branch-protection-enforces-admins-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `github`
+    criticality `high`
+
+    category `asset_list`
+    target_asset_type `SDLC::Repository`
+
+    title `Default branch protection rule enforces admins`
+    description `Validates that the default branch protection rule applies to repository administrators (enforce_admins.enabled = true). When admins are exempt, they bypass PR-review and signed-commit requirements, creating a privileged side-channel into the default branch.`
+    author `scanset-security`
+    tags `github,sdlc,branch-protection,admin-enforcement,ksi-iam-elp,nist-ac-6,cmmc-ac-l2-3.1.5`
+
+    control_mapping `KSI:KSI-IAM-ELP,NIST-800-53:AC-6,NIST-800-53:AC-6(7),CMMC:AC.L2-3.1.5`
+    control_objective `KSI-IAM-ELP,AC.L2-3.1.5`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `GitHub:scanset:sdlc-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `14`
+    recommendation `Settings, Branches, Branch protection rules: enable "Do not allow bypassing the above settings" (admin enforcement). Admins must use the same PR-review path as other contributors; emergency bypass is auditable via the GitHub audit log.`
+
+    component_id `comp-github-sdlc`
+
+    impl_KSI_IAM_ELP `Elevated-privilege least-privilege intent is enforced by removing the routine admin-bypass on default-branch protection. When enforce_admins is true, repository admins must use the same pull-request path as every other contributor, eliminating the implicit privileged side-channel and making any bypass attempt a logged event (admin permanently sets enforce_admins=false, or temporarily disables the rule). The CTN reads the live setting at scan time.`
+    impl_AC_L2_3_1_5 `Least privilege at the SDLC integration boundary is enforced by binding protection rules equally on admins and contributors. Without admin enforcement, the principle of least privilege would not hold uniformly across the org; the policy detects when admin enforcement is off and emits a finding.`
+
+META_END
+
+DEF
+    # Default placeholder values, overridden per-asset by PolicySetSync
+    # at bind time. The VARs are pattern-fillers consumed by the template
+    # OBJECT below; on bind, PolicySetSync rewrites the SET body with one
+    # OBJECT per bound asset, each carrying that asset's concrete
+    # owner / repo / branch from inventory.assets.metadata.
+    VAR owner string `_unbound_`
+    VAR repo string `_unbound_`
+    VAR branch string `_unbound_`
+
+    # Bound assets - managed programmatically by PolicySetSync from
+    # inventory.asset_policies (status = active). Do not hand-edit;
+    # the SET body is the only mutable region of this file.
+    SET github_repos union
+        OBJECT repo_target
+            owner VAR owner
+            repo VAR repo
+            branch VAR branch
+        OBJECT_END
+    SET_END
+
+    STATE admins_enforced
+        found boolean = true
+        protection_exists boolean = true
+        enforces_admins boolean = true
+    STATE_END
+
+    CRI AND
+        CTN github_branch_protection
+            TEST all all AND
+            STATE_REF admins_enforced
+            SET_REF github_repos
+        CTN_END
+    CRI_END
+DEF_END

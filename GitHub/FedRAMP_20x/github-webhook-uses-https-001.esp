@@ -1,0 +1,73 @@
+# Webhook target uses HTTPS
+# Platform: GitHub (SDLC::Webhook assets)
+# CTN: github_webhook
+# Frameworks: KSI-CNA-RNT, KSI-SVC-SNT, NIST SC-8, SC-8(1), CMMC SC.L2-3.13.8
+
+META
+    esp_id `github-webhook-uses-https-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `github`
+    criticality `high`
+
+    category `asset_list`
+    target_asset_type `SDLC::Webhook`
+
+    title `Webhook target URL uses HTTPS`
+    description `Validates that the repository webhook POSTs to an https:// URL. Plaintext http:// webhooks leak payload contents (commit metadata, pushed file diffs, author email, branch names) to anyone on-path between GitHub and the receiver.`
+    author `scanset-security`
+    tags `github,sdlc,webhook,tls,transport,ksi-cna-rnt,ksi-svc-snt,nist-sc-8,cmmc-sc-l2-3.13.8`
+
+    control_mapping `KSI:KSI-CNA-RNT,KSI:KSI-SVC-SNT,NIST-800-53:SC-8,NIST-800-53:SC-8(1),CMMC:SC.L2-3.13.8`
+    control_objective `KSI-CNA-RNT,KSI-SVC-SNT,SC.L2-3.13.8`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `GitHub:scanset:sdlc-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Repo Settings, Webhooks, edit the offending webhook: change "Payload URL" from http:// to https://. If the receiver does not support TLS, replace it with one that does; do not relax the policy.`
+
+    component_id `comp-github-sdlc`
+
+    impl_KSI_CNA_RNT `Runtime network traffic from the SDLC platform to downstream consumers is required to traverse TLS. The webhook payload URL is the egress channel; mandating https:// ensures the payload (commit refs, author identifiers, repo state) is confidentiality-protected in transit. The CTN reads the live config.url field and the policy fails when the scheme is not https.`
+    impl_KSI_SVC_SNT `Service network traffic confidentiality is enforced at the application layer by mandating TLS on webhook receivers. This complements network-layer controls (egress firewalls, TLS-only L7 LBs) and prevents misconfiguration at the application layer from silently downgrading.`
+    impl_SC_L2_3_13_8 `Confidentiality of CUI-adjacent metadata in transit (commit author email, branch contents) is preserved by requiring TLS on all webhook deliveries. The policy detects http:// targets and emits a finding for each.`
+
+META_END
+
+DEF
+    # Default placeholder values, overridden per-asset by PolicySetSync
+    # at bind time. PolicySetSync rewrites the SET body with one OBJECT
+    # per bound webhook (one webhook == one SDLC::Webhook asset).
+    VAR owner string `_unbound_`
+    VAR repo string `_unbound_`
+    VAR webhook_id int 0
+
+    # Bound assets - managed programmatically by PolicySetSync from
+    # inventory.asset_policies (status = active). Do not hand-edit;
+    # the SET body is the only mutable region of this file.
+    SET github_webhooks union
+        OBJECT webhook_target
+            owner VAR owner
+            repo VAR repo
+            webhook_id VAR webhook_id
+        OBJECT_END
+    SET_END
+
+    STATE webhook_is_https
+        found boolean = true
+        uses_https boolean = true
+    STATE_END
+
+    CRI AND
+        CTN github_webhook
+            TEST all all AND
+            STATE_REF webhook_is_https
+            SET_REF github_webhooks
+        CTN_END
+    CRI_END
+DEF_END

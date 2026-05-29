@@ -1,0 +1,71 @@
+# Repo requires web-UI commit signoff
+# Platform: GitHub (SDLC::Repository assets)
+# CTN: github_repo_metadata
+# Frameworks: KSI-SVC-VRI, NIST SI-7, AU-10
+
+META
+    esp_id `github-repo-web-commit-signoff-required-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `github`
+    criticality `low`
+
+    category `asset_list`
+    target_asset_type `SDLC::Repository`
+
+    title `Repo requires web-UI commit signoff (DCO)`
+    description `Validates that the repository requires a DCO-style "Signed-off-by" line on commits made through the web UI. This is a lightweight non-repudiation signal complementing cryptographic signing for the cases (browser edits, suggestions accepted in PRs) where signing keys are unavailable.`
+    author `scanset-security`
+    tags `github,sdlc,web-signoff,dco,ksi-svc-vri,nist-si-7`
+
+    control_mapping `KSI:KSI-SVC-VRI,NIST-800-53:SI-7,NIST-800-53:AU-10`
+    control_objective `KSI-SVC-VRI`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `GitHub:scanset:sdlc-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `60`
+    recommendation `Settings, Branches, "Require contributors to sign off on web-based commits": enable. Web-UI commits will then require contributors to certify origin per the DCO before the commit can be made.`
+
+    component_id `comp-github-sdlc`
+
+    impl_KSI_SVC_VRI `Resource integrity for SDLC artifacts at the contribution boundary is supplemented by a DCO-style signoff requirement for browser-initiated commits. Cryptographic signing covers desktop-tooling commits; the web_commit_signoff_required flag covers the non-key paths (in-browser file edits, suggestion-acceptance flows) by requiring an explicit per-commit certification.`
+
+META_END
+
+DEF
+    # Default placeholder values, overridden per-asset by PolicySetSync
+    # at bind time. The VARs are pattern-fillers consumed by the template
+    # OBJECT below; on bind, PolicySetSync rewrites the SET body with one
+    # OBJECT per bound asset, each carrying that asset's concrete
+    # owner / repo from inventory.assets.metadata.
+    VAR owner string `_unbound_`
+    VAR repo string `_unbound_`
+
+    # Bound assets - managed programmatically by PolicySetSync from
+    # inventory.asset_policies (status = active). Do not hand-edit;
+    # the SET body is the only mutable region of this file.
+    SET github_repos union
+        OBJECT repo_target
+            owner VAR owner
+            repo VAR repo
+        OBJECT_END
+    SET_END
+
+    STATE web_signoff_required
+        found boolean = true
+        web_commit_signoff_required boolean = true
+    STATE_END
+
+    CRI AND
+        CTN github_repo_metadata
+            TEST all all AND
+            STATE_REF web_signoff_required
+            SET_REF github_repos
+        CTN_END
+    CRI_END
+DEF_END

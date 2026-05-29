@@ -1,5 +1,5 @@
 # KSI-CNA-EIS: Azure Defender for Storage - Standard Tier Enabled
-# CIS Azure 2.1.4: Ensure Microsoft Defender for Storage is enabled
+# Azure 2.1.4: Ensure Microsoft Defender for Storage is enabled
 
 META
     esp_id `ksi-cna-eis-az-defender-storage-001`
@@ -11,7 +11,7 @@ META
     title `KSI-CNA-EIS: Azure Defender for Storage - Standard tier enabled`
     description `Validates that Microsoft Defender for Storage is enabled at the Standard pricing tier, providing threat detection for unusual access patterns and potential data exfiltration from storage accounts`
     author `security-team`
-    tags `azure,defender,storage,threat-protection,CIS-2.1.4`
+    tags `azure,defender,storage,threat-protection`
 
     control_mapping `KSI:KSI-CNA-EIS,NIST:SI-4,NIST:SC-28`
     control_objective `KSI-CNA-EIS`

@@ -1,0 +1,75 @@
+# Default branch has protection enabled
+# Platform: GitHub (SDLC::Repository assets)
+# CTN: github_branch_protection
+# Frameworks: KSI-CMT-VTD, KSI-SVC-VRI, NIST CM-3, CM-5
+
+META
+    esp_id `github-branch-protection-exists-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `github`
+    criticality `high`
+
+    category `asset_list`
+    target_asset_type `SDLC::Repository`
+
+    title `Default branch has a protection rule`
+    description `Validates that the repositorys default branch has any branch protection rule configured. Without protection, contributors can force-push, delete the branch, or merge unreviewed commits, breaking the SDLC integrity boundary.`
+    author `scanset-security`
+    tags `github,sdlc,branch-protection,ksi-cmt-vtd,ksi-svc-vri,nist-cm-3,nist-cm-5`
+
+    control_mapping `KSI:KSI-CMT-VTD,KSI:KSI-SVC-VRI,NIST-800-53:CM-3,NIST-800-53:CM-5`
+    control_objective `KSI-CMT-VTD,KSI-SVC-VRI`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `GitHub:scanset:sdlc-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Settings, Branches, Branch protection rules: create a rule that matches the default branch name. Recommend starting with "Require a pull request before merging" plus blocking force pushes and deletions.`
+
+    component_id `comp-github-sdlc`
+
+    impl_KSI_CMT_VTD `The default branch is a managed configuration whose mutation is gated by an explicit protection rule rather than implicit contributor trust. The CTN queries the protection endpoint at scan time; an HTTP 200 (rule exists) passes, an HTTP 404 ("Branch not protected") fails with a finding. The 403 plan-restricted case is flagged separately so audit can distinguish operator-fixable misconfiguration from a paid-tier dependency.`
+    impl_KSI_SVC_VRI `Verifiable resource integrity for the SDLC default branch requires a control surface at the repo level. Branch protection is that surface; the policy asserts its presence as the prerequisite for any downstream check (PR review, signed commits, force-push blocking) to have meaningful enforcement.`
+
+META_END
+
+DEF
+    # Default placeholder values, overridden per-asset by PolicySetSync
+    # at bind time. The VARs are pattern-fillers consumed by the template
+    # OBJECT below; on bind, PolicySetSync rewrites the SET body with one
+    # OBJECT per bound asset, each carrying that asset's concrete
+    # owner / repo / branch from inventory.assets.metadata.
+    VAR owner string `_unbound_`
+    VAR repo string `_unbound_`
+    VAR branch string `_unbound_`
+
+    # Bound assets - managed programmatically by PolicySetSync from
+    # inventory.asset_policies (status = active). Do not hand-edit;
+    # the SET body is the only mutable region of this file.
+    SET github_repos union
+        OBJECT repo_target
+            owner VAR owner
+            repo VAR repo
+            branch VAR branch
+        OBJECT_END
+    SET_END
+
+    STATE protection_rule_present
+        found boolean = true
+        protection_exists boolean = true
+        protection_plan_restricted boolean = false
+    STATE_END
+
+    CRI AND
+        CTN github_branch_protection
+            TEST all all AND
+            STATE_REF protection_rule_present
+            SET_REF github_repos
+        CTN_END
+    CRI_END
+DEF_END

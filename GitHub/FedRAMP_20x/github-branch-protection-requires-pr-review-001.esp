@@ -1,0 +1,91 @@
+# Default branch requires PR review before merge
+# Platform: GitHub (SDLC::Repository assets)
+# CTN: github_branch_protection
+# Frameworks: KSI-CMT-VTD, KSI-SVC-VRI, CMMC CA.L2-3.12.1, NIST CA-2, CM-4
+
+META
+    esp_id `github-branch-protection-requires-pr-review-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `github`
+    criticality `high`
+
+    category `asset_list`
+    target_asset_type `SDLC::Repository`
+
+    title `Default branch requires PR review before merge`
+    description `Validates that the default branch protection rule requires at least one approving pull request review before merge. Without this, code can land on the default branch without peer review, breaking the validate-trust-by-default posture (KSI-CMT-VTD) and the change-control review intent of NIST CM-3/CM-4.`
+    author `scanset-security`
+    tags `github,sdlc,branch-protection,ksi-cmt,ksi-svc-vri,cmmc-ca-l2-3.12.1,nist-ca-2,nist-cm-4`
+
+    control_mapping `KSI:KSI-CMT-VTD,KSI:KSI-SVC-VRI,CMMC:CA.L2-3.12.1,NIST-800-53:CA-2,NIST-800-53:CM-3,NIST-800-53:CM-4`
+    control_objective `KSI-CMT-VTD,KSI-SVC-VRI,CA.L2-3.12.1`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `GitHub:scanset:sdlc-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `14`
+    recommendation `Settings, Branches, Branch protection rules: edit (or create) the rule for the default branch and set "Require a pull request before merging" with "Require approvals" >= 1.`
+
+    component_id `comp-github-sdlc`
+
+    impl_KSI_CMT_VTD `Validate-trust-by-default for the SDLC integration is enforced at the platform layer: changes to the default branch must traverse a pull request with at least one approving review, so trust is established by review rather than by individual commit author. The CTN observes the live protection rule via GitHub API at scan time and emits a finding when no PR-review requirement is configured.`
+    impl_KSI_SVC_VRI `Verifiable resource integrity for the SDLC artifact (the default branch HEAD) is enforced by requiring peer-reviewed pull requests as the only path to mutate the branch. The branch protection rule constitutes the integrity boundary; the scan envelope's transparency log timestamp provides defensible evidence of when the rule was observed in each state.`
+    impl_CA_L2_3_12_1 `Changes to the default branch are required to pass through a pull request with at least one approving review. The CTN fetches the live branch protection rule from the GitHub API at scan time, asserts that required_pull_request_reviews is configured with required_approving_review_count >= 1, and emits a finding when the assertion fails.`
+
+META_END
+
+DEF
+    # Default placeholder values, overridden per-asset by PolicySetSync
+    # at bind time. The VARs are pattern-fillers consumed by the template
+    # OBJECT below; on bind, PolicySetSync rewrites the SET body with one
+    # OBJECT per bound asset, each carrying that asset's concrete
+    # owner / repo / branch from inventory.assets.metadata.
+    VAR owner string `_unbound_`
+    VAR repo string `_unbound_`
+    VAR branch string `_unbound_`
+
+    # Bound assets - managed programmatically by PolicySetSync from
+    # inventory.asset_policies (status = active). Do not hand-edit;
+    # the SET body is the only mutable region of this file.
+    SET github_repos union
+        OBJECT repo_target
+            owner VAR owner
+            repo VAR repo
+            branch VAR branch
+        OBJECT_END
+    SET_END
+
+    STATE protection_meets_review_requirement
+        # The CTN sets `found = true` when the HTTP call completes
+        # (including the 404 "Branch not protected" case, which is a
+        # meaningful state, not an error).
+        found boolean = true
+
+        # `protection_exists = false` means the API returned 404 with
+        # body message "Branch not protected" - no rule at all on the
+        # branch. That fails this policy.
+        protection_exists boolean = true
+
+        # `protection_plan_restricted` is true when the API returned 403
+        # with "Upgrade to GitHub Pro" or similar. The CMMC objective
+        # does not include a free-tier exception, so we treat plan
+        # restriction as a fail too.
+        protection_plan_restricted boolean = false
+
+        # The actual assertion.
+        required_pr_review_count int >= 1
+    STATE_END
+
+    CRI AND
+        CTN github_branch_protection
+            TEST all all AND
+            STATE_REF protection_meets_review_requirement
+            SET_REF github_repos
+        CTN_END
+    CRI_END
+DEF_END

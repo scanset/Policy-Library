@@ -1,5 +1,5 @@
 # KSI-CNA-EIS: Azure Defender for ARM - Standard Tier Enabled
-# CIS Azure 2.1.10: Ensure Microsoft Defender for ARM is enabled
+# Azure 2.1.10: Ensure Microsoft Defender for ARM is enabled
 
 META
     esp_id `ksi-cna-eis-az-defender-arm-001`
@@ -11,7 +11,7 @@ META
     title `KSI-CNA-EIS: Azure Defender for ARM - Standard tier enabled`
     description `Validates that Microsoft Defender for Resource Manager is enabled at the Standard pricing tier, providing threat detection for suspicious management operations across the Azure control plane`
     author `security-team`
-    tags `azure,defender,arm,resource-manager,threat-protection,CIS-2.1.10`
+    tags `azure,defender,arm,resource-manager,threat-protection`
 
     control_mapping `KSI:KSI-CNA-EIS,NIST:SI-4,NIST:AU-6`
     control_objective `KSI-CNA-EIS`

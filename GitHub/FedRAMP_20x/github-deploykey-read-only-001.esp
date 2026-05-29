@@ -1,0 +1,71 @@
+# Deploy key is read-only (cannot push)
+# Platform: GitHub (SDLC::DeployKey assets)
+# CTN: github_deploy_key
+# Frameworks: KSI-IAM-ELP, NIST AC-6, AC-6(7)
+
+META
+    esp_id `github-deploykey-read-only-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `github`
+    criticality `high`
+
+    category `asset_list`
+    target_asset_type `SDLC::DeployKey`
+
+    title `Deploy key is read-only`
+    description `Validates that the repository deploy key has read-only access (cannot push). A read-write deploy key is an SSH credential with org-wide blast radius if leaked; deploy keys should be scoped to fetch-only access for CI/CD checkout workflows.`
+    author `scanset-security`
+    tags `github,sdlc,deploy-key,least-privilege,ksi-iam-elp,nist-ac-6`
+
+    control_mapping `KSI:KSI-IAM-ELP,NIST-800-53:AC-6,NIST-800-53:AC-6(7)`
+    control_objective `KSI-IAM-ELP`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `GitHub:scanset:identity-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Repo Settings, Deploy keys: delete the existing key. Re-add it with "Allow write access" UNCHECKED. If a workflow legitimately needs push (rare), use a fine-grained PAT or GitHub App installation token instead, which can be scoped + audited.`
+
+    component_id `comp-github-sdlc`
+
+    impl_KSI_IAM_ELP `Elevated-privilege least-privilege intent applies to SSH credentials authorized against the SDLC platform. Read-only deploy keys can fetch source but cannot mutate; this matches the typical CI/CD checkout workflow without granting code-push capability. The CTN reads the live read_only flag and the policy fails when the key has write access (read_only = false).`
+
+META_END
+
+DEF
+    # Default placeholder values, overridden per-asset by PolicySetSync
+    # at bind time. PolicySetSync rewrites the SET body with one OBJECT
+    # per bound deploy key (one key == one SDLC::DeployKey asset).
+    VAR owner string `_unbound_`
+    VAR repo string `_unbound_`
+    VAR key_id int 0
+
+    # Bound assets - managed programmatically by PolicySetSync from
+    # inventory.asset_policies (status = active). Do not hand-edit;
+    # the SET body is the only mutable region of this file.
+    SET github_deploy_keys union
+        OBJECT deploy_key_target
+            owner VAR owner
+            repo VAR repo
+            key_id VAR key_id
+        OBJECT_END
+    SET_END
+
+    STATE key_read_only
+        found boolean = true
+        read_only boolean = true
+    STATE_END
+
+    CRI AND
+        CTN github_deploy_key
+            TEST all all AND
+            STATE_REF key_read_only
+            SET_REF github_deploy_keys
+        CTN_END
+    CRI_END
+DEF_END

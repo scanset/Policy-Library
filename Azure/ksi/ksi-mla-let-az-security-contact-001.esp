@@ -1,6 +1,6 @@
 # KSI-MLA-LET: Azure Security Contact - Alert Notifications Configured
-# CIS Azure 2.1.19: Ensure security contact email is set
-# CIS Azure 2.1.21: Ensure alert notifications are enabled
+# Azure 2.1.19: Ensure security contact email is set
+# Azure 2.1.21: Ensure alert notifications are enabled
 
 META
     esp_id `ksi-mla-let-az-security-contact-001`
@@ -12,7 +12,7 @@ META
     title `KSI-MLA-LET: Azure Security Contact - alert notifications configured`
     description `Validates that a security contact is configured with email notifications enabled at High severity and role-based notifications active, ensuring security events are communicated to responsible personnel`
     author `security-team`
-    tags `azure,security-contact,notifications,alerts,CIS-2.1.19,CIS-2.1.21`
+    tags `azure,security-contact,notifications,alerts`
 
     control_mapping `KSI:KSI-MLA-LET,NIST:SI-4(12),NIST:IR-6`
     control_objective `KSI-MLA-LET`

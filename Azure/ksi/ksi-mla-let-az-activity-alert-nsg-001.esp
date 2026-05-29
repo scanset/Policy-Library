@@ -1,6 +1,6 @@
 # KSI-MLA-LET: Azure Activity Log Alert - NSG Changes
-# CIS Azure 5.2.3: Alert on create/update NSG
-# CIS Azure 5.2.4: Alert on delete NSG
+# Azure 5.2.3: Alert on create/update NSG
+# Azure 5.2.4: Alert on delete NSG
 
 META
     esp_id `ksi-mla-let-az-activity-alert-nsg-001`
@@ -12,7 +12,7 @@ META
     title `KSI-MLA-LET: Azure Activity Alert - NSG write monitored`
     description `Validates that an activity log alert exists and is enabled to detect creation or modification of network security groups, ensuring network access changes are tracked`
     author `security-team`
-    tags `azure,activity-log,alert,nsg,network,CIS-5.2.3`
+    tags `azure,activity-log,alert,nsg,network`
 
     control_mapping `KSI:KSI-MLA-LET,KSI:KSI-CMT-LMC,NIST:AU-12,NIST:SI-4`
     control_objective `KSI-MLA-LET`

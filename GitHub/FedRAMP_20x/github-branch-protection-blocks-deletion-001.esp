@@ -1,0 +1,75 @@
+# Default branch blocks deletion
+# Platform: GitHub (SDLC::Repository assets)
+# CTN: github_branch_protection
+# Frameworks: KSI-MLA-LET, KSI-RPL, NIST AU-9, CP-9
+
+META
+    esp_id `github-branch-protection-blocks-deletion-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `github`
+    criticality `high`
+
+    category `asset_list`
+    target_asset_type `SDLC::Repository`
+
+    title `Default branch blocks deletion`
+    description `Validates that the default branch protection rule does NOT allow branch deletion. Deletion of the default branch is an irreversible, audit-breaking event with no legitimate operational reason on a long-lived primary branch.`
+    author `scanset-security`
+    tags `github,sdlc,branch-protection,deletion,ksi-mla-let,ksi-rpl,nist-au-9,nist-cp-9`
+
+    control_mapping `KSI:KSI-MLA-LET,KSI:KSI-RPL-ARP,NIST-800-53:AU-9,NIST-800-53:CP-9`
+    control_objective `KSI-MLA-LET,KSI-RPL-ARP`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `GitHub:scanset:sdlc-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Settings, Branches, Branch protection rules: ensure "Allow deletions" is OFF on the default branch rule.`
+
+    component_id `comp-github-sdlc`
+
+    impl_KSI_MLA_LET `Audit and log integrity for the default branch is preserved by preventing its deletion. Branch deletion would simultaneously remove every reference to the branchs commit history from the live repository view, defeating the logging-throughout intent.`
+    impl_KSI_RPL_ARP `Audited recovery procedures depend on the persistence of the source-of-truth branch. Blocking deletion of the default branch ensures the recovery procedure (git checkout main, build, deploy) has a deterministic anchor; without this control a single mis-clicked deletion could break the recovery chain.`
+
+META_END
+
+DEF
+    # Default placeholder values, overridden per-asset by PolicySetSync
+    # at bind time. The VARs are pattern-fillers consumed by the template
+    # OBJECT below; on bind, PolicySetSync rewrites the SET body with one
+    # OBJECT per bound asset, each carrying that asset's concrete
+    # owner / repo / branch from inventory.assets.metadata.
+    VAR owner string `_unbound_`
+    VAR repo string `_unbound_`
+    VAR branch string `_unbound_`
+
+    # Bound assets - managed programmatically by PolicySetSync from
+    # inventory.asset_policies (status = active). Do not hand-edit;
+    # the SET body is the only mutable region of this file.
+    SET github_repos union
+        OBJECT repo_target
+            owner VAR owner
+            repo VAR repo
+            branch VAR branch
+        OBJECT_END
+    SET_END
+
+    STATE deletion_blocked
+        found boolean = true
+        protection_exists boolean = true
+        allows_deletions boolean = false
+    STATE_END
+
+    CRI AND
+        CTN github_branch_protection
+            TEST all all AND
+            STATE_REF deletion_blocked
+            SET_REF github_repos
+        CTN_END
+    CRI_END
+DEF_END

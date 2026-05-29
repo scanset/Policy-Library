@@ -1,0 +1,38 @@
+# AWS Storage Services Benchmark v1.0.0
+# 3.12 - Ensure configuring IAM for disaster recovery
+
+META
+    esp_id `aws-stor-3-12`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `aws`
+    criticality `medium`
+    control_mapping `NIST-800-53:AC-2,NIST-800-53:AC-3,KSI:KSI-AFR-ADS,KSI:KSI-CED-RGT`
+    title `3.12 - Ensure configuring IAM for disaster recovery`
+    description `Verify backup role is configured for cross-region disaster recovery.`
+    author `example-security`
+    assessment_method `TEST`
+    implementation_status `implemented`
+    impl_AC_2 `3.12: Ensure configuring IAM for disaster recovery`
+    impl_AC_3 `3.12: Ensure configuring IAM for disaster recovery`
+    impl_AT_2 `3.12: Ensure configuring IAM for disaster recovery`
+META_END
+
+DEF
+    OBJECT backup_role
+        role_name `BACKUP_ROLE_NAME`
+    OBJECT_END
+
+    STATE backup_role_check
+        found boolean = true
+        attached_policy_count int >= 2
+    STATE_END
+
+    CRI AND
+        CTN aws_iam_role
+            TEST all all AND
+            STATE_REF backup_role_check
+            OBJECT_REF backup_role
+        CTN_END
+    CRI_END
+DEF_END

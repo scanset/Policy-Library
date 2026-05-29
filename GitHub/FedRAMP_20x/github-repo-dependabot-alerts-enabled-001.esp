@@ -1,0 +1,73 @@
+# Repo has Dependabot security updates enabled
+# Platform: GitHub (SDLC::Repository assets)
+# CTN: github_repo_metadata
+# Frameworks: KSI-SCR-MON, KSI-SCR-PIY, NIST RA-5, CMMC RA.L2-3.11.2
+
+META
+    esp_id `github-repo-dependabot-alerts-enabled-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `github`
+    criticality `medium`
+
+    category `asset_list`
+    target_asset_type `SDLC::Repository`
+
+    title `Repo has Dependabot security updates enabled`
+    description `Validates that the repository has Dependabot security updates turned on. Dependabot continuously matches the repos declared dependencies against the GitHub Advisory Database and opens automated PRs to bump vulnerable versions. Without it, the team has no in-band notification when a dependency becomes vulnerable.`
+    author `scanset-security`
+    tags `github,sdlc,supply-chain,dependabot,vulnerability-management,ksi-scr-mon,ksi-scr-piy,nist-ra-5,cmmc-ra-l2-3.11.2`
+
+    control_mapping `KSI:KSI-SCR-MON,KSI:KSI-SCR-PIY,NIST-800-53:RA-5,CMMC:RA.L2-3.11.2`
+    control_objective `KSI-SCR-MON,KSI-SCR-PIY,RA.L2-3.11.2`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `GitHub:scanset:sdlc-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `14`
+    recommendation `Settings, Code security, "Dependabot": enable both "Dependabot alerts" and "Dependabot security updates". This requires the repo to declare a manifest (package.json, Cargo.toml, requirements.txt, go.mod, etc.) and a default branch.`
+
+    component_id `comp-github-sdlc`
+
+    impl_KSI_SCR_MON `Supply chain risk monitoring for source dependencies is continuous and automated. Dependabot reads the repos manifest, cross-references against the GitHub Advisory Database, and surfaces matching advisories as repo alerts plus optionally as automated remediation PRs. The CTN reads the security_and_analysis.dependabot_security_updates.status field; the policy fails when it is not "enabled".`
+    impl_KSI_SCR_PIY `Supply chain policy integration is bound at the platform layer: the orgs vulnerability-management process flows through Dependabot rather than relying on out-of-band scanning tools. Enabling it ensures every repo participates in the same supply-chain detection regime.`
+    impl_RA_L2_3_11_2 `Risk assessment and vulnerability monitoring for SDLC artifacts is performed continuously through Dependabot. The system identifies known vulnerabilities in dependencies and surfaces them as actionable alerts in the repo. Findings are closed when the responsible team accepts the auto-remediation PR or upgrades manually.`
+
+META_END
+
+DEF
+    # Default placeholder values, overridden per-asset by PolicySetSync
+    # at bind time. The VARs are pattern-fillers consumed by the template
+    # OBJECT below; on bind, PolicySetSync rewrites the SET body with one
+    # OBJECT per bound asset, each carrying that asset's concrete
+    # owner / repo from inventory.assets.metadata.
+    VAR owner string `_unbound_`
+    VAR repo string `_unbound_`
+
+    # Bound assets - managed programmatically by PolicySetSync from
+    # inventory.asset_policies (status = active). Do not hand-edit;
+    # the SET body is the only mutable region of this file.
+    SET github_repos union
+        OBJECT repo_target
+            owner VAR owner
+            repo VAR repo
+        OBJECT_END
+    SET_END
+
+    STATE dependabot_on
+        found boolean = true
+        dependabot_security_updates_enabled boolean = true
+    STATE_END
+
+    CRI AND
+        CTN github_repo_metadata
+            TEST all all AND
+            STATE_REF dependabot_on
+            SET_REF github_repos
+        CTN_END
+    CRI_END
+DEF_END

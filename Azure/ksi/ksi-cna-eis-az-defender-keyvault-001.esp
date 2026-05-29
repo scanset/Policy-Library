@@ -1,5 +1,5 @@
 # KSI-CNA-EIS: Azure Defender for Key Vault - Standard Tier Enabled
-# CIS Azure 2.1.8: Ensure Microsoft Defender for Key Vault is enabled
+# Azure 2.1.8: Ensure Microsoft Defender for Key Vault is enabled
 
 META
     esp_id `ksi-cna-eis-az-defender-keyvault-001`
@@ -11,7 +11,7 @@ META
     title `KSI-CNA-EIS: Azure Defender for Key Vault - Standard tier enabled`
     description `Validates that Microsoft Defender for Key Vault is enabled at the Standard pricing tier, providing threat detection for unusual and potentially harmful access to key vaults`
     author `security-team`
-    tags `azure,defender,keyvault,threat-protection,CIS-2.1.8`
+    tags `azure,defender,keyvault,threat-protection`
 
     control_mapping `KSI:KSI-CNA-EIS,NIST:SI-4,NIST:SC-12`
     control_objective `KSI-CNA-EIS`

@@ -1,5 +1,5 @@
 # KSI-SVC-ASM: Azure Key Vault - Soft Delete and Purge Protection
-# CIS Azure 8.5: Ensure key vault is recoverable
+# Azure 8.5: Ensure key vault is recoverable
 
 META
     esp_id `ksi-svc-asn-az-keyvault-protection-001`
@@ -11,7 +11,7 @@ META
     title `KSI-SVC-ASM: Azure Key Vault - soft delete and purge protection`
     description `Validates that key vault has soft delete enabled and purge protection active, ensuring cryptographic keys and secrets cannot be permanently deleted without a retention period`
     author `security-team`
-    tags `azure,keyvault,soft-delete,purge-protection,secrets,CIS-8.5`
+    tags `azure,keyvault,soft-delete,purge-protection,secrets`
 
     control_mapping `KSI:KSI-SVC-ASM,NIST:SC-12,NIST:SC-28(1)`
     control_objective `KSI-SVC-ASM`

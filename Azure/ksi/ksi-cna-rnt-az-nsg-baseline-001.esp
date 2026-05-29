@@ -1,5 +1,5 @@
 # KSI-CNA-RNT: Azure NSG - Network Security Group Exists and Active
-# CIS Azure 6.1-6.4: Network security group restrictions
+# Azure 6.1-6.4: Network security group restrictions
 
 META
     esp_id `ksi-cna-rnt-az-nsg-baseline-001`
@@ -11,7 +11,7 @@ META
     title `KSI-CNA-RNT: Azure NSG - network security group provisioned`
     description `Validates that the network security group is provisioned and has security rules configured to restrict network traffic, ensuring machine-based resources are not exposed without access controls`
     author `security-team`
-    tags `azure,nsg,network,firewall,access-control,CIS-6.1,CIS-6.2`
+    tags `azure,nsg,network,firewall,access-control`
 
     control_mapping `KSI:KSI-CNA-RNT,NIST:SC-7,NIST:AC-4`
     control_objective `KSI-CNA-RNT`

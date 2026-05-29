@@ -1,0 +1,77 @@
+# Org default repository permission is not "write" or "admin"
+# Platform: GitHub (SDLC::Organization assets)
+# CTN: github_org_settings
+# Frameworks: KSI-IAM-ELP, NIST AC-6, CMMC AC.L2-3.1.5
+
+META
+    esp_id `github-org-no-default-write-permission-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `github`
+    criticality `high`
+
+    category `asset_list`
+    target_asset_type `SDLC::Organization`
+
+    title `Org default repository permission is least-privilege`
+    description `Validates that the GitHub organization sets the default repository permission to "none" or "read", not "write" or "admin". When the default is write, every member of the org has write access to every repo in the org by default, violating least-privilege intent.`
+    author `scanset-security`
+    tags `github,org,permissions,least-privilege,ksi-iam-elp,nist-ac-6,cmmc-ac-l2-3.1.5`
+
+    control_mapping `KSI:KSI-IAM-ELP,NIST-800-53:AC-6,NIST-800-53:AC-3,CMMC:AC.L2-3.1.5`
+    control_objective `KSI-IAM-ELP,AC.L2-3.1.5`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `GitHub:scanset:identity-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Settings, Member privileges, "Base permissions" for the org: set to "Read" or "None". Specific write/admin access should be granted per-repo or per-team rather than as a default.`
+
+    component_id `comp-github-identity`
+
+    impl_KSI_IAM_ELP `Least-privilege at the SDLC integration platform is enforced by default-deny for write access. The default_repository_permission setting determines what every newly-onboarded member can do across every repo in the org. When set to write or admin, every new hire instantly has org-wide modification rights; setting it to read (or none) flips the default and requires explicit grants for any modification. The CTN reads the live setting and the policy fails when it is write or admin.`
+    impl_AC_L2_3_1_5 `Principle of least privilege applies to the SDLC integrations identity defaults. Default repository permission of "read" or "none" ensures privileges are not granted in excess of what is required for an individual to perform their assigned tasks at onboarding time.`
+
+META_END
+
+DEF
+    # Default placeholder value, overridden per-asset by PolicySetSync
+    # at bind time. PolicySetSync rewrites the SET body with one OBJECT
+    # per bound org, each carrying that org's concrete login.
+    VAR login string `_unbound_`
+
+    # Bound assets - managed programmatically by PolicySetSync from
+    # inventory.asset_policies (status = active). Do not hand-edit;
+    # the SET body is the only mutable region of this file.
+    SET github_orgs union
+        OBJECT org_target
+            login VAR login
+        OBJECT_END
+    SET_END
+
+    STATE default_perm_not_write
+        found boolean = true
+        # Accepting "read" or "none" as least-privilege defaults. "write"
+        # and "admin" fail. The string equality below pins on "read" or
+        # "none" via the OR within the STATE block below.
+        default_repository_permission string != `write`
+    STATE_END
+
+    STATE default_perm_not_admin
+        found boolean = true
+        default_repository_permission string != `admin`
+    STATE_END
+
+    CRI AND
+        CTN github_org_settings
+            TEST all all AND
+            STATE_REF default_perm_not_write
+            STATE_REF default_perm_not_admin
+            SET_REF github_orgs
+        CTN_END
+    CRI_END
+DEF_END

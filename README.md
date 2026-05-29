@@ -46,6 +46,7 @@ check, what the expected state is, and which CTN contract executes the check.
 |-------|-----------|----------|-------------|
 | KSI — AWS | `AWS/FedRAMP_20x/` | 27 | AWS infrastructure compliance |
 | KSI — Azure | `Azure/ksi/` | 18 | Azure Entra ID, Defender, networking, monitoring |
+| KSI — GitHub SDLC | `GitHub/FedRAMP_20x/` | 16 | Branch protection, org identity, repo posture, webhook + deploy-key hygiene |
 | KSI — RHEL 9 | `RHEL9/KSI/` | 16 | RHEL 9 host hardening (auditd, FIPS, SELinux, SSH, sudo, kernel) |
 
 ### CMMC L1 / NIST 800-171
@@ -61,9 +62,9 @@ check, what the expected state is, and which CTN contract executes the check.
 |---|---|
 | STIG total | 1,014 |
 | CIS total | 24 |
-| KSI total | 61 |
+| KSI total | 77 |
 | CMMC L1 total | 17 |
-| **Grand total** | **~1,116** |
+| **Grand total** | **~1,132** |
 
 All policies have been validated end-to-end against live systems with zero
 parse errors and zero runtime errors (on platforms where the engine wires
@@ -137,6 +138,14 @@ security_group, ssm, ssoadmin, vpc, vpc_endpoint, identitystore.
 
 `az_defender_pricing`, `az_nsg`, `az_role_assignment_list`,
 `az_virtual_network`.
+
+### GitHub KSI (6 contracts)
+
+`github_org_settings`, `github_repo_metadata`, `github_branch_protection`,
+`github_webhook`, `github_deploy_key`, `github_workflow`. All six share a
+common HTTPS client + auth env (`GITHUB_TOKEN`, `GITHUB_BASE_URL`); each
+CTN is purpose-built for one SDLC asset_type with strongly-typed
+STATE outputs that ESP policies assert against directly.
 
 ### M365 CMMC (1 contract)
 

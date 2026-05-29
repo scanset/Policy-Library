@@ -1,0 +1,76 @@
+# Default branch requires signed commits
+# Platform: GitHub (SDLC::Repository assets)
+# CTN: github_branch_protection
+# Frameworks: KSI-SVC-VRI, KSI-AFR-UCM, NIST SI-7, CMMC SI.L2-3.14.1
+
+META
+    esp_id `github-branch-protection-requires-signed-commits-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `github`
+    criticality `medium`
+
+    category `asset_list`
+    target_asset_type `SDLC::Repository`
+
+    title `Default branch requires signed commits`
+    description `Validates that the default branch protection rule requires signed commits. Without this requirement, attackers with write access can spoof commit authorship and undermine commit-level non-repudiation.`
+    author `scanset-security`
+    tags `github,sdlc,branch-protection,commit-signing,ksi-svc-vri,ksi-afr-ucm,nist-si-7,cmmc-si-l2-3.14.1`
+
+    control_mapping `KSI:KSI-SVC-VRI,KSI:KSI-AFR-UCM,NIST-800-53:SI-7,CMMC:SI.L2-3.14.1`
+    control_objective `KSI-SVC-VRI,KSI-AFR-UCM,SI.L2-3.14.1`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `GitHub:scanset:sdlc-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `30`
+    recommendation `Settings, Branches, Branch protection rules: enable "Require signed commits" on the default branch rule. Coordinate with contributors first so they configure GPG, SSH, or S/MIME signing on their commits before enabling.`
+
+    component_id `comp-github-sdlc`
+
+    impl_KSI_SVC_VRI `Commit-level resource integrity is enforced by requiring all commits on the default branch to carry a verified cryptographic signature. The protection rules required_signatures.enabled flag must be true; absent or false fails the policy. The CTN observes the live setting via GitHub API at scan time.`
+    impl_KSI_AFR_UCM `Use of cryptographic modules for commit attestation is bound at the platform layer. GitHub validates signature material (GPG, SSH, S/MIME) server-side and tags each commit with verified-or-unverified status. The branch protection rule requires the verified status on every commit reaching the default branch.`
+    impl_SI_L2_3_14_1 `System and information integrity for source-control artifacts is enforced by mandating cryptographic signing of every commit on the default branch. The policy detects when this requirement is disabled and emits a finding.`
+
+META_END
+
+DEF
+    # Default placeholder values, overridden per-asset by PolicySetSync
+    # at bind time. The VARs are pattern-fillers consumed by the template
+    # OBJECT below; on bind, PolicySetSync rewrites the SET body with one
+    # OBJECT per bound asset, each carrying that asset's concrete
+    # owner / repo / branch from inventory.assets.metadata.
+    VAR owner string `_unbound_`
+    VAR repo string `_unbound_`
+    VAR branch string `_unbound_`
+
+    # Bound assets - managed programmatically by PolicySetSync from
+    # inventory.asset_policies (status = active). Do not hand-edit;
+    # the SET body is the only mutable region of this file.
+    SET github_repos union
+        OBJECT repo_target
+            owner VAR owner
+            repo VAR repo
+            branch VAR branch
+        OBJECT_END
+    SET_END
+
+    STATE protection_requires_signed
+        found boolean = true
+        protection_exists boolean = true
+        requires_signed_commits boolean = true
+    STATE_END
+
+    CRI AND
+        CTN github_branch_protection
+            TEST all all AND
+            STATE_REF protection_requires_signed
+            SET_REF github_repos
+        CTN_END
+    CRI_END
+DEF_END

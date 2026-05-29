@@ -1,0 +1,72 @@
+# Webhook SSL verification enabled
+# Platform: GitHub (SDLC::Webhook assets)
+# CTN: github_webhook
+# Frameworks: KSI-CNA-RNT, KSI-SVC-SNT, NIST SC-8, SC-23
+
+META
+    esp_id `github-webhook-ssl-verify-enabled-001`
+    version `1.0.0`
+    dsl_schema_version `1.0.0`
+    platform `github`
+    criticality `high`
+
+    category `asset_list`
+    target_asset_type `SDLC::Webhook`
+
+    title `Webhook SSL verification is enabled`
+    description `Validates that the repository webhook validates the receivers TLS certificate (config.insecure_ssl = "0"). With verification disabled, an attacker with DNS or BGP capability can impersonate the receiver and silently swallow webhook payloads or inject responses.`
+    author `scanset-security`
+    tags `github,sdlc,webhook,tls,cert-verify,ksi-cna-rnt,ksi-svc-snt,nist-sc-8,nist-sc-23`
+
+    control_mapping `KSI:KSI-CNA-RNT,KSI:KSI-SVC-SNT,NIST-800-53:SC-8,NIST-800-53:SC-23`
+    control_objective `KSI-CNA-RNT,KSI-SVC-SNT`
+
+    assessment_method `TEST`
+    implementation_status `implemented`
+    responsible_role `system-admin`
+    control_origination `sp-system`
+    inherited_from `GitHub:scanset:sdlc-baseline`
+    customer_responsibility `configuration`
+
+    remediation_days `7`
+    recommendation `Repo Settings, Webhooks, edit the offending webhook: ensure "SSL verification" is set to "Enabled". If the receiver presents an untrusted cert, fix the cert; do not disable verification.`
+
+    component_id `comp-github-sdlc`
+
+    impl_KSI_CNA_RNT `Runtime network traffic integrity requires the SDLC platform to validate downstream TLS certificates on egress. The webhook config.insecure_ssl field, when set to "1", instructs GitHub to skip certificate validation, opening the path to identity spoofing by anyone with DNS or BGP capability. The CTN reads the field at scan time and the policy fails when verification is disabled.`
+    impl_KSI_SVC_SNT `Service network traffic authenticity is enforced by certificate validation on the webhook channel. Combined with the HTTPS-required policy, this ensures the receiver is both confidentiality-protected and identity-authenticated.`
+
+META_END
+
+DEF
+    # Default placeholder values, overridden per-asset by PolicySetSync
+    # at bind time. PolicySetSync rewrites the SET body with one OBJECT
+    # per bound webhook (one webhook == one SDLC::Webhook asset).
+    VAR owner string `_unbound_`
+    VAR repo string `_unbound_`
+    VAR webhook_id int 0
+
+    # Bound assets - managed programmatically by PolicySetSync from
+    # inventory.asset_policies (status = active). Do not hand-edit;
+    # the SET body is the only mutable region of this file.
+    SET github_webhooks union
+        OBJECT webhook_target
+            owner VAR owner
+            repo VAR repo
+            webhook_id VAR webhook_id
+        OBJECT_END
+    SET_END
+
+    STATE webhook_ssl_verified
+        found boolean = true
+        ssl_verify_enabled boolean = true
+    STATE_END
+
+    CRI AND
+        CTN github_webhook
+            TEST all all AND
+            STATE_REF webhook_ssl_verified
+            SET_REF github_webhooks
+        CTN_END
+    CRI_END
+DEF_END

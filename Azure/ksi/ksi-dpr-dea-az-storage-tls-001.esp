@@ -1,6 +1,6 @@
 # KSI-DPR-DEA: Azure Storage Account - HTTPS and TLS 1.2 Enforcement
-# CIS Azure 3.1: Ensure storage account requires HTTPS
-# CIS Azure 3.15: Ensure minimum TLS version is 1.2
+# Azure 3.1: Ensure storage account requires HTTPS
+# Azure 3.15: Ensure minimum TLS version is 1.2
 
 META
     esp_id `ksi-dpr-dea-az-storage-tls-001`
@@ -12,7 +12,7 @@ META
     title `KSI-SVC-SNT: Azure Storage - HTTPS and TLS 1.2 required`
     description `Validates that the storage account enforces HTTPS-only access and requires TLS 1.2 minimum, preventing cleartext data transmission and weak cipher negotiation`
     author `security-team`
-    tags `azure,storage,tls,https,encryption-in-transit,CIS-3.1,CIS-3.15`
+    tags `azure,storage,tls,https,encryption-in-transit`
 
     control_mapping `KSI:KSI-SVC-SNT,NIST:SC-8,NIST:SC-8(1)`
     control_objective `KSI-SVC-SNT`
